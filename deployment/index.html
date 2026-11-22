@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yashwanth Micro-OS: Dynamic Quantum Scheduler Simulator</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2228%22>⏱️</text></svg>">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-title-row">
+        <div class="title-group">
+          <h1>⏱️ Yashwanth Micro-OS</h1>
+          <span class="badge">Dynamic Quantum Scheduler</span>
+          <span class="badge badge-outline">Static Space</span>
+          <span class="badge badge-outline">x86_64 Bare-Metal</span>
+        </div>
+      </div>
+      <div class="disclaimer-banner">
+        <strong>⚠️ Academic Companion Notice:</strong> This interactive web application is a client-side simulator hosted on a 
+        <strong>Hugging Face Static Space</strong>. The genuine operating system kernel is written in bare-metal 
+        <strong>Rust (<code>no_std</code>, <code>no_main</code>, x86_64)</strong> and boots via the 
+        <strong>Limine protocol</strong> in QEMU.
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <!-- Controls Column -->
+      <section class="controls-col">
+        <div class="card">
+          <h2 class="card-title">⚙️ Scheduler Configuration</h2>
+
+          <div class="form-group">
+            <label for="schedMode">Scheduling Algorithm</label>
+            <select id="schedMode">
+              <option value="DQ-RR" selected>Dynamic Quantum Round Robin (DQ-RR)</option>
+              <option value="Static-RR">Static Round Robin (RR)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="baseQuantum">
+              Base Time Quantum (Ticks)
+              <span class="val-display" id="valBaseQuantum">6</span>
+            </label>
+            <input type="range" id="baseQuantum" min="2" max="16" value="6" step="1">
+          </div>
+
+          <div class="form-group">
+            <label for="targetCycle">
+              Target Cycle Time (Ticks)
+              <span class="val-display" id="valTargetCycle">36</span>
+            </label>
+            <input type="range" id="targetCycle" min="12" max="60" value="36" step="2">
+          </div>
+
+          <h3 class="card-title" style="margin-top: 24px; font-size: 0.95rem;">
+            📋 Task Workloads (Burst Ticks)
+          </h3>
+
+          <div class="form-group">
+            <label for="t1Burst">
+              <span style="color: var(--task1-color);">■</span> T1: CPUBound (P5)
+              <span class="val-display" id="valT1Burst">18</span>
+            </label>
+            <input type="range" id="t1Burst" min="4" max="30" value="18" step="1">
+          </div>
+
+          <div class="form-group">
+            <label for="t2Burst">
+              <span style="color: var(--task2-color);">■</span> T2: Interactive (P5, Yields)
+              <span class="val-display" id="valT2Burst">10</span>
+            </label>
+            <input type="range" id="t2Burst" min="2" max="25" value="10" step="1">
+          </div>
+
+          <div class="form-group">
+            <label for="t3Burst">
+              <span style="color: var(--task3-color);">■</span> T3: SyncWorker (P8)
+              <span class="val-display" id="valT3Burst">14</span>
+            </label>
+            <input type="range" id="t3Burst" min="4" max="25" value="14" step="1">
+          </div>
+
+          <div class="form-group">
+            <label for="t4Burst">
+              <span style="color: var(--task4-color);">■</span> T4: Diagnostics (P3)
+              <span class="val-display" id="valT4Burst">6</span>
+            </label>
+            <input type="range" id="t4Burst" min="2" max="15" value="6" step="1">
+          </div>
+
+          <button id="btnRun" class="btn-primary">▶ Run Simulation</button>
+          <button id="btnReset" class="btn-outline">↺ Reset to Kernel Defaults</button>
+        </div>
+
+        <div class="card" style="font-size: 0.85rem; color: var(--text-secondary);">
+          <h3 class="card-title" style="font-size: 0.95rem;">📐 Dynamic Quantum Formula</h3>
+          <p style="margin-bottom: 8px;">
+            $$Q = \text{clamp}\left(\left\lfloor \frac{T_{\text{target}}}{N_{\text{runnable}}} \times \beta \times \frac{\text{Prio}}{5} \right\rfloor, 2, 16\right)$$
+          </p>
+          <p>
+            • $\beta = 0.75$ for voluntary yielders (interactive latency boost)<br>
+            • $\beta = 1.25$ for compute-bound tasks (reduces switches)
+          </p>
+        </div>
+      </section>
+
+      <!-- Visualization Column -->
+      <section class="results-col">
+        <!-- Metric Tiles -->
+        <div class="metrics-row">
+          <div class="metric-tile">
+            <div class="metric-label">Total Execution</div>
+            <div class="metric-value" id="metricTicks">49</div>
+            <div style="font-size: 0.7rem; color: var(--text-secondary);">ticks (1 tick ≈ 10ms)</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-label">Context Switches</div>
+            <div class="metric-value" id="metricSwitches">9</div>
+            <div style="font-size: 0.7rem; color: var(--text-secondary);">total transitions</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-label">Avg Waiting</div>
+            <div class="metric-value" id="metricAvgWait">24.0</div>
+            <div style="font-size: 0.7rem; color: var(--text-secondary);">ticks</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-label">Avg Turnaround</div>
+            <div class="metric-value" id="metricAvgTa">36.0</div>
+            <div style="font-size: 0.7rem; color: var(--text-secondary);">ticks</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-label">Jain's Fairness</div>
+            <div class="metric-value" id="metricFairness">0.8780</div>
+            <div style="font-size: 0.7rem; color: var(--text-secondary);">1.0 = perfectly fair</div>
+          </div>
+        </div>
+
+        <!-- Gantt Chart Timeline -->
+        <div class="card">
+          <h2 class="card-title">📊 Scheduling Timeline (Gantt Chart)</h2>
+          <div class="timeline-wrapper">
+            <canvas id="timelineCanvas" width="800" height="200"></canvas>
+          </div>
+          <div class="timeline-legend">
+            <div class="legend-item">
+              <div class="legend-color" style="background: var(--task1-color);"></div>
+              <span>Task 1: CPUBound (P5)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: var(--task2-color);"></div>
+              <span>Task 2: Interactive (P5, yields)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: var(--task3-color);"></div>
+              <span>Task 3: SyncWorker (P8)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: var(--task4-color);"></div>
+              <span>Task 4: Diagnostics (P3)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Metrics Table -->
+        <div class="card">
+          <h2 class="card-title">📋 Task Execution Metrics</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>TID</th>
+                  <th>Task Name</th>
+                  <th>Priority</th>
+                  <th>Burst</th>
+                  <th>Waiting</th>
+                  <th>Turnaround</th>
+                  <th>CSW</th>
+                  <th>Preemptions</th>
+                  <th>Yields</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+                <!-- Dynamically Populated by script.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Chronological Execution Trace Log -->
+        <div class="card">
+          <h2 class="card-title">📜 Scheduler Event Trace Log</h2>
+          <pre class="trace-log" id="traceLog">Initializing simulation...</pre>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Yashwanth Micro-OS • Educational Operating Systems Project (CA-6) • x86_64 Rust Kernel with Limine Bootloader
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
