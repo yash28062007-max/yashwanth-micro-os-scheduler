@@ -4,6 +4,7 @@
 *.bin
 *.sys
 *.log
+*.ppm
 __pycache__/
 *.pyc
 .vscode/
