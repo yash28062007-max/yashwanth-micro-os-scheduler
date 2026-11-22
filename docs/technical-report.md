@@ -13,7 +13,7 @@
 ---
 
 ## 1. Abstract
-This report documents the design, implementation, and empirical validation of **Yashwanth Micro-OS**, a minimal educational operating system kernel developed in bare-metal Rust for the x86_64 architecture. Developed for the flagship CA-6 engineering assessment, the project moves beyond theoretical concepts to constructing working operating system primitives. The kernel features a Limine-compliant bootloader entry, 16550 UART serial diagnostics, an Interrupt Descriptor Table (IDT), an Intel 8254 Programmable Interval Timer (PIT), an interrupt-safe `SpinLock<T>` synchronization primitive, and a deterministic Bump memory allocator. The core specialization is **Scheduler Engineering**, featuring an adaptive **Dynamic Quantum Round Robin (DQ-RR)** scheduling engine that dynamically recalibrates execution time slices based on ready queue depth, task priority, and historical execution behavior (CPU-bound vs voluntary cooperative yields). The system was validated using a dual testing hierarchy comprising automated host-side unit tests and full bare-metal QEMU integration runs with Python serial trace analysis. Results demonstrate that DQ-RR achieves a 22.8% reduction in interactive turnaround latency and a 22.2% reduction in context-switching overhead compared to static Round Robin, while maintaining a Jain's Fairness Index of 0.9124.
+This report documents the design, implementation, and empirical validation of **Yashwanth Micro-OS**, a minimal educational operating system kernel developed in bare-metal Rust for the x86_64 architecture. Developed for the flagship CA-6 engineering assessment, the project moves beyond theoretical concepts to constructing working operating system primitives. The kernel features a Limine-compliant bootloader entry, 16550 UART serial diagnostics, an Interrupt Descriptor Table (IDT), an Intel 8254 Programmable Interval Timer (PIT), an interrupt-safe `SpinLock<T>` synchronization primitive, and a deterministic Bump memory allocator. The core specialization is **Scheduler Engineering**, featuring an adaptive **Dynamic Quantum Round Robin (DQ-RR)** scheduling engine that dynamically recalibrates execution time slices based on ready queue depth, task priority, and execution behavior (CPU-bound vs voluntary cooperative yields). The system was validated using a dual testing hierarchy comprising 14 automated host-side unit tests, 62 algorithmic verification assertions, and full bare-metal QEMU integration runs with Python serial trace analysis. Results demonstrate that DQ-RR completes the 4-task heterogeneous workload in 49 ticks with 9 context switches, an average waiting time of 24 ticks, average turnaround time of 36 ticks, zero starvation, and an equitable Jain's Fairness Index of 0.8780.
 
 ---
 
@@ -160,27 +160,37 @@ A 128 KiB static memory buffer is managed by `BumpAllocator`:
 ---
 
 ## 13. Testing and Validation
-- **Host Unit Tests**: 15 automated unit tests covering task states, queue overflow, ring buffer wrap-around, dynamic quantum math, spinlock exclusion, and bump allocation limits.
+- **Host Unit Tests**: 14 automated unit tests covering task states, queue overflow, ring buffer wrap-around, dynamic quantum math, spinlock exclusion, and bump allocation limits.
+- **Algorithmic Assertions**: 62 automated checks in `tests/verify_implementation.py` verifying FIFO queue boundary conditions and dynamic quantum adaptation formulas.
 - **Bare-Metal QEMU Runs**: Controlled execution of 4 heterogeneous tasks verifying scheduler switching, serial output, and clean exit via `isa-debug-exit`.
 
 ---
 
 ## 14. Experimental Results & Performance Analysis
-From execution of the 4-task workload:
-- **Total Workload Ticks**: 48 ticks (480 ms).
-- **Context Switches**: 14 switches (compared to 18 in static RR).
-- **Average Waiting Time**: 18.5 ticks.
-- **Average Turnaround Time**: 30.5 ticks.
-- **Interactive Task (T2) Turnaround**: 27 ticks vs 35 ticks in static RR (**22.8% improvement**).
-- **Jain's Fairness Index**: **0.9124** (weighted), indicating highly equitable CPU distribution.
+Empirical execution of the 4-task workload in QEMU bare metal yielded the following actual measurements:
+
+| TID | Name | Priority | Runtime (ticks) | Waiting Time (ticks) | Turnaround (ticks) | Context Switches | Preemptions |
+|:---:|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| 1 | Task-1-CPUBound | 5 | 18 | 22 | 40 | 2 | 1 |
+| 2 | Task-2-Interactive | 5 | 10 | 39 | 49 | 5 | 0 |
+| 3 | Task-3-SyncWorker | 8 | 14 | 11 | 25 | 1 | 0 |
+| 4 | Task-4-Diagnostics | 3 | 6 | 25 | 31 | 1 | 0 |
+
+- **Completed Tasks:** 4 / 4
+- **Total Scheduling Ticks:** 49 ticks (490 ms at 100 Hz)
+- **Total Context Switches:** 9 context switches
+- **Average Waiting Time:** 24 ticks (240 ms)
+- **Average Turnaround Time:** 36 ticks (360 ms)
+- **Scheduling Efficiency:** 100% (zero task starvation observed)
+- **Jain's Fairness Index:** **0.8780** (evaluated via `scripts/analyze_traces.py` on real QEMU serial trace)
 
 ---
 
-## 15. Limitations
-1. Single-heap bump allocator lacks fine-grained individual `free()` capability.
-2. Uniprocessor execution (no multi-core SMP load balancing).
-3. Monolithic Ring 0 execution (no Ring 3 user space or page-fault isolation).
-4. Ephemeral in-memory execution without persistent storage drivers.
+## 15. Limitations & Execution Model Transparency
+1. **Single-Address Space & Ring 0 Execution:** The kernel operates entirely in supervisor mode (Ring 0). There is no user/kernel privilege separation (Ring 3) or separate per-process page directory structures.
+2. **Cooperative Demonstration Scheduling Dispatch:** While low-level hardware interrupt structures (GDT, IDT, 8259 PIC remapping, 8254 PIT rate generator) are initialized at the hardware level, the demonstration execution loop in `src/main.rs` dispatches ticks cooperatively via `increment_ticks()` and `on_timer_tick()` rather than triggering context swaps through asynchronous hardware interrupt `iretq` handlers.
+3. **Linear Bump Allocator:** The bump allocator is fast and deterministic ($O(1)$) but lacks fine-grained individual `free()` or page reallocation mechanisms.
+4. **Uniprocessor (UP) Target:** The kernel targets single-core x86_64; multiprocessor SMP scheduling using APIC IPIs is not implemented.
 
 ---
 

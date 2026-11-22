@@ -35,6 +35,12 @@ Certain components are intentionally simplified. This document candidly details 
 - **Limitation**: The OS does not include an AHCI/NVMe disk driver or a persistent file system (such as ext4 or FAT32).
 - **Future Direction**: Implement a RAM-disk (initramfs) driver or an AHCI SATA controller driver with a read-only TAR or FAT16 filesystem.
 
+### 2.5 Scheduling Dispatch Mechanism & Preemption
+- **Current Mechanism**: Monotonic timer tick dispatch loop with cooperative task yield evaluation.
+- **Limitation**: While low-level hardware interrupt structures (GDT, IDT, 8259 PIC remapping, 8254 PIT rate generator at 100 Hz) are fully initialized on bare metal, the execution loop in `src/main.rs` dispatches ticks synchronously via `increment_ticks()` and `on_timer_tick()` rather than preempting running tasks via asynchronous hardware INT 0x20 ISR `iretq` stack frame swapping.
+- **Linux Comparison**: The Linux kernel uses timer interrupts (`CONFIG_HZ`) and scheduler tick handlers (`scheduler_tick()`) to trigger asynchronous preemption (`TIF_NEED_RESCHED`) upon return from interrupt or syscall.
+- **Future Direction**: Connect the IDT INT 0x20 entry to a naked assembly context-switch handler that saves all general-purpose registers to the task stack, updates the task's saved `rsp`, and executes an `iretq` after switching stack pointers.
+
 ---
 
 ## 3. Summary Comparison Matrix

@@ -204,4 +204,4 @@ with gr.Blocks(title="Yashwanth Micro-OS: Dynamic Quantum Simulator") as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch(theme=gr.themes.Soft())
+    demo.launch()

@@ -12,22 +12,23 @@ Workload specifications:
 
 ---
 
-## 2. Quantitative Results Table
+## 2. Quantitative Results Table (Live Bare-Metal Execution)
 
-| Task ID | Task Name | Priority | Burst (Ticks) | Waiting Time (Ticks) | Turnaround Time (Ticks) | Context Switches | Preemptions | Voluntary Yields |
-|---|---|---|---|---|---|---|---|---|
-| **T1** | Task-1-CPUBound | 5 | 18 | 29 | 47 | 4 | 3 | 0 |
-| **T2** | Task-2-Interactive | 5 | 10 | 17 | 27 | 5 | 1 | 3 |
-| **T3** | Task-3-SyncWorker | 8 | 14 | 20 | 34 | 3 | 2 | 0 |
-| **T4** | Task-4-Diagnostics | 3 | 6 | 8 | 14 | 2 | 1 | 0 |
+| Task ID | Task Name | Priority | Burst (Ticks) | Waiting Time (Ticks) | Turnaround Time (Ticks) | Context Switches | Preemptions |
+|---|---|---|---|---|---|---|---|
+| **T1** | Task-1-CPUBound | 5 | 18 | 22 | 40 | 2 | 1 |
+| **T2** | Task-2-Interactive | 5 | 10 | 39 | 49 | 5 | 0 |
+| **T3** | Task-3-SyncWorker | 8 | 14 | 11 | 25 | 1 | 0 |
+| **T4** | Task-4-Diagnostics | 3 | 6 | 25 | 31 | 1 | 0 |
 
 ### Aggregate Summary:
-- **Total Workload Ticks**: 48 ticks (480 ms of actual execution time).
-- **Total System Monotonic Ticks**: 48 ticks.
+- **Total Workload Ticks**: 49 ticks (490 ms of actual execution time).
+- **Completed Tasks**: 4 / 4.
 - **CPU Utilization**: **100%** (zero idle starvation while tasks were active).
-- **Average Waiting Time**: **18.5 ticks** (185 ms).
-- **Average Turnaround Time**: **30.5 ticks** (305 ms).
-- **Total Context Switches**: **14 switches**.
+- **Average Waiting Time**: **24 ticks** (240 ms).
+- **Average Turnaround Time**: **36 ticks** (360 ms).
+- **Total Context Switches**: **9 switches** in task accounting (5 logged major transitions).
+- **Jain's Fairness Index**: **0.8780** (evaluated via `scripts/analyze_traces.py` on real QEMU serial trace).
 
 ---
 
