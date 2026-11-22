@@ -1,0 +1,34 @@
+[package]
+name = "yashwanth_micro_os"
+version = "0.1.0"
+edition = "2021"
+authors = ["Yashwanth <student@os-course.edu>"]
+description = "Yashwanth Micro-OS: A minimal educational bare-metal x86_64 Rust kernel with Round Robin and Dynamic Quantum scheduling."
+license = "MIT"
+
+[lib]
+name = "yashwanth_micro_os"
+path = "src/lib.rs"
+crate-type = ["rlib"]
+
+[[bin]]
+name = "yashwanth_micro_os"
+path = "src/main.rs"
+required-features = ["kernel_bin"]
+
+[features]
+default = []
+kernel_bin = []
+
+[dependencies]
+
+[dev-dependencies]
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+panic = "abort"
+opt-level = 2
+lto = false
+codegen-units = 1

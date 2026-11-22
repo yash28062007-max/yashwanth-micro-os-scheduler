@@ -1,0 +1,9 @@
+/target
+/build
+*.iso
+*.bin
+*.sys
+*.log
+__pycache__/
+*.pyc
+.vscode/
