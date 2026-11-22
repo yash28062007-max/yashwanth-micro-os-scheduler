@@ -142,7 +142,7 @@ pub static KERNEL_ALLOCATOR: SpinLock<BumpAllocator> = SpinLock::new(BumpAllocat
 pub fn init_heap() {
     let mut allocator = KERNEL_ALLOCATOR.lock();
     unsafe {
-        let heap_ptr = KERNEL_HEAP_MEMORY.as_mut_ptr() as usize;
+        let heap_ptr = core::ptr::addr_of_mut!(KERNEL_HEAP_MEMORY) as *mut u8 as usize;
         allocator.init(heap_ptr, KERNEL_HEAP_SIZE);
     }
 }

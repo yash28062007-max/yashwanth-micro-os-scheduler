@@ -42,10 +42,10 @@ pub unsafe fn init_gdt() {
         // Reload segment registers
         core::arch::asm!(
             "push 0x08",
-            "lea {tmp}, [1f + rip]",
+            "lea {tmp}, [2f + rip]",
             "push {tmp}",
             "retfq",
-            "1:",
+            "2:",
             "mov {data_sel:x}, 0x10",
             "mov ds, {data_sel:x}",
             "mov es, {data_sel:x}",

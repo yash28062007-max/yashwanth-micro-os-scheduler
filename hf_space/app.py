@@ -167,7 +167,7 @@ def simulate_scheduler(mode, base_quantum, target_cycle, t1_burst, t2_burst, t3_
 
     return summary_text, df, fig
 
-with gr.Blocks(title="Yashwanth Micro-OS: Dynamic Quantum Simulator", theme=gr.themes.Soft()) as demo:
+with gr.Blocks(title="Yashwanth Micro-OS: Dynamic Quantum Simulator") as demo:
     gr.Markdown("# 🚀 Yashwanth Micro-OS: Dynamic Quantum Scheduler Simulator")
     gr.Markdown(
         "> ⚠️ **Academic Companion Notice:** This interactive tool is a companion visual simulator. "
@@ -204,4 +204,4 @@ with gr.Blocks(title="Yashwanth Micro-OS: Dynamic Quantum Simulator", theme=gr.t
     )
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(theme=gr.themes.Soft())
