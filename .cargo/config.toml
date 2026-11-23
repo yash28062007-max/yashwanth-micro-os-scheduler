@@ -6,4 +6,5 @@ rustflags = [
     "-C", "link-arg=-z", "-C", "link-arg=max-page-size=0x1000",
     "-C", "code-model=kernel",
     "-C", "relocation-model=static",
+    "-C", "no-redzone",
 ]

@@ -148,6 +148,13 @@ impl RoundRobinScheduler {
             if let Some(task) = self.tasks[curr_id.0].as_mut() {
                 task.yield_count += 1;
             }
+
+            // If ready queue is empty, the current task is the only runnable task.
+            // Avoid unnecessary self-switching: continue running without context switch penalty.
+            if self.ready_queue.is_empty() {
+                return ScheduleAction::Continue;
+            }
+
             self.schedule_next(SwitchReason::TaskYielded)
         } else {
             ScheduleAction::Idle

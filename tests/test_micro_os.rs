@@ -17,7 +17,10 @@ use yashwanth_micro_os::scheduler::round_robin::{RoundRobinScheduler, ScheduleAc
 use yashwanth_micro_os::sync::SpinLock;
 use yashwanth_micro_os::task::state::TaskState;
 use yashwanth_micro_os::task::task::{Task, TaskId};
-use yashwanth_micro_os::timer::{get_ticks, increment_ticks, reset_ticks, ticks_to_ms};
+use yashwanth_micro_os::timer::{
+    consume_pending_ticks, get_hw_interrupt_count, get_ticks, increment_ticks, on_timer_tick_irq,
+    reset_ticks, ticks_to_ms,
+};
 
 #[test]
 fn test_task_creation_and_fields() {
@@ -284,4 +287,80 @@ fn test_timer_ticks_and_conversion() {
     increment_ticks();
     assert_eq!(get_ticks(), 2);
     assert_eq!(ticks_to_ms(10), 100); // 100 Hz = 10 ms/tick
+}
+
+#[test]
+fn test_hardware_timer_irq_accounting() {
+    let initial_hw = get_hw_interrupt_count();
+    let initial_ticks = get_ticks();
+    let _ = consume_pending_ticks();
+
+    // Simulate 3 hardware IRQ0 pulses
+    on_timer_tick_irq();
+    on_timer_tick_irq();
+    on_timer_tick_irq();
+
+    assert_eq!(get_hw_interrupt_count(), initial_hw + 3);
+    assert_eq!(get_ticks(), initial_ticks + 3);
+    assert_eq!(consume_pending_ticks(), 3);
+    // Consuming pending ticks must reset accumulator to 0
+    assert_eq!(consume_pending_ticks(), 0);
+}
+
+#[test]
+fn test_yield_when_single_runnable_task_avoids_self_switch() {
+    let mut sched = RoundRobinScheduler::new();
+    let task = Task::new(TaskId(1), "SoloTask", 5, 10, 4, None);
+    assert!(sched.spawn_task(task).is_ok());
+
+    // First tick puts SoloTask into Running state
+    let init_act = sched.on_timer_tick();
+    match init_act {
+        ScheduleAction::ContextSwitch { next, reason, .. } => {
+            assert_eq!(next, TaskId(1));
+            assert_eq!(reason, SwitchReason::InitialSchedule);
+        }
+        _ => panic!("Expected InitialSchedule"),
+    }
+    assert_eq!(sched.total_context_switches, 1);
+
+    // Voluntary yield when no other tasks are ready
+    let yield_act = sched.yield_current();
+    // Must NOT self-switch: should Continue running!
+    assert_eq!(yield_act, ScheduleAction::Continue);
+    // Context switch count must NOT be incremented
+    assert_eq!(sched.total_context_switches, 1);
+    // Task yield count must be recorded
+    let t = sched.get_task(TaskId(1)).unwrap();
+    assert_eq!(t.yield_count, 1);
+    assert_eq!(t.state, TaskState::Running);
+}
+
+#[test]
+fn test_yield_with_multiple_tasks_performs_cooperative_switch() {
+    let mut sched = RoundRobinScheduler::new();
+    let t1 = Task::new(TaskId(1), "TaskA", 5, 10, 4, None);
+    let t2 = Task::new(TaskId(2), "TaskB", 5, 10, 4, None);
+    assert!(sched.spawn_task(t1).is_ok());
+    assert!(sched.spawn_task(t2).is_ok());
+
+    // Schedule TaskA
+    let _ = sched.on_timer_tick();
+    assert_eq!(sched.current_task_id(), Some(TaskId(1)));
+
+    // TaskA voluntarily yields CPU
+    let act = sched.yield_current();
+    match act {
+        ScheduleAction::ContextSwitch { prev, next, reason } => {
+            assert_eq!(prev, Some(TaskId(1)));
+            assert_eq!(next, TaskId(2));
+            assert_eq!(reason, SwitchReason::TaskYielded);
+        }
+        _ => panic!("Expected ContextSwitch with TaskYielded reason"),
+    }
+
+    assert_eq!(sched.current_task_id(), Some(TaskId(2)));
+    assert_eq!(sched.get_task(TaskId(1)).unwrap().state, TaskState::Ready);
+    assert_eq!(sched.get_task(TaskId(2)).unwrap().state, TaskState::Running);
+    assert_eq!(sched.get_task(TaskId(1)).unwrap().yield_count, 1);
 }

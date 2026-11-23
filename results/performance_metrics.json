@@ -1,9 +1,10 @@
 {
-  "ticks": 49,
-  "context_switches": 5,
+  "ticks": 27,
+  "context_switches": 6,
   "switch_reasons": {
     "InitialSchedule": 1,
     "QuantumExpired": 1,
+    "TaskYielded": 1,
     "TaskTerminated": 3
   },
   "jains_fairness_index": 0.8780487804878049

@@ -12,7 +12,7 @@ use yashwanth_micro_os::{
     scheduler::{ScheduleAction, SwitchReason, SCHEDULER},
     sync::SpinLock,
     task::{Task, TaskId},
-    timer::{get_ticks, increment_ticks, init_pit},
+    timer::{consume_pending_ticks, get_hw_interrupt_count, get_ticks, init_pit},
 };
 
 /// Entry point called by Limine bootloader in 64-bit long mode.
@@ -149,28 +149,78 @@ pub extern "C" fn _start() -> ! {
     log_task!("Spawned Task 3: 'Task-3-SyncWorker'  (Burst: 14 ticks, Priority: 8)");
     log_task!("Spawned Task 4: 'Task-4-Diagnostics' (Burst:  6 ticks, Priority: 3)");
 
+    // Enable CPU hardware interrupts (sti)
+    log_info!("Enabling CPU hardware interrupts (sti) for 8254 PIT IRQ0...");
+    unsafe {
+        core::arch::asm!("sti", options(nomem, nostack));
+    }
+
+    // Hardware timer calibration: verify real timer interrupts arrive
+    log_info!("Verifying hardware timer delivery (awaiting initial PIT pulses)...");
+    let mut calibration_wait = 5000000;
+    while get_hw_interrupt_count() < 3 && calibration_wait > 0 {
+        calibration_wait -= 1;
+        unsafe {
+            core::arch::asm!("pause", options(nomem, nostack));
+        }
+    }
+    let hw_irqs_initial = get_hw_interrupt_count();
+    log_info!(
+        "Hardware timer operational: {} PIT IRQ0 interrupts received during calibration.",
+        hw_irqs_initial
+    );
+
     println!("\n----------------------------------------------------------------");
-    log_sched!("Starting Integrated Scheduling Loop (PIT Driven Ticks):");
+    log_sched!("Starting Integrated Scheduling Loop (Hardware PIT Driven Ticks):");
     println!("----------------------------------------------------------------");
 
     // 7. Scheduling Execution Loop
-    let mut loop_limit = 100;
+    let mut loop_limit = 200;
+    let mut last_yield_tick: u64 = u64::MAX;
+
     while loop_limit > 0 {
         loop_limit -= 1;
-        let current_tick = increment_ticks();
+
+        // Check if all tasks have completed
+        {
+            let sched = SCHEDULER.lock();
+            if sched.runnable_task_count() == 0 {
+                log_sched!("All tasks terminated. CPU entered idle state.");
+                break;
+            }
+        }
+
+        // Await next hardware tick from PIT IRQ0 (sleep CPU using atomic sti; hlt)
+        if consume_pending_ticks() == 0 {
+            unsafe {
+                core::arch::asm!("sti; hlt", options(nomem, nostack));
+            }
+        }
+
+        let current_tick = get_ticks();
 
         let action = {
             let mut sched = SCHEDULER.lock();
+            let tick_action = sched.on_timer_tick();
 
-            // Simulate cooperative yield for Task 2 at tick intervals
-            if let Some(curr) = sched.current_task_id() {
-                if curr == TaskId(2) && current_tick % 3 == 0 {
-                    log_task!("Task 2 voluntarily yields CPU to simulate I/O burst completion");
-                    sched.yield_current();
+            // If the running task didn't terminate or exhaust its quantum,
+            // check if Task 2 should voluntarily yield (simulate I/O burst).
+            // Guard with `current_tick != last_yield_tick` to prevent duplicate yields in the same tick.
+            if tick_action == ScheduleAction::Continue {
+                if let Some(curr) = sched.current_task_id() {
+                    if curr == TaskId(2) && current_tick % 3 == 0 && current_tick != last_yield_tick {
+                        last_yield_tick = current_tick;
+                        log_task!("Task 2 voluntarily yields CPU to simulate I/O burst completion");
+                        sched.yield_current()
+                    } else {
+                        tick_action
+                    }
+                } else {
+                    tick_action
                 }
+            } else {
+                tick_action
             }
-
-            sched.on_timer_tick()
         };
 
         match action {
@@ -253,6 +303,7 @@ pub extern "C" fn _start() -> ! {
         println!("Completed Tasks:           {}", sched.completed_tasks_count);
         println!("Total Context Switches:    {}", sched.total_context_switches);
         println!("Total Scheduling Ticks:    {}", get_ticks());
+        println!("Total Hardware IRQ0 Ticks: {}", get_hw_interrupt_count());
         println!("Average Waiting Time:      {} ticks", avg_waiting);
         println!("Average Turnaround Time:   {} ticks", avg_turnaround);
         println!("Scheduling Efficiency:     100% (No starvation observed)");
@@ -261,6 +312,11 @@ pub extern "C" fn _start() -> ! {
     println!("\n================================================================");
     println!("           YASHWANTH MICRO-OS EXECUTION SUCCESSFUL             ");
     println!("================================================================\n");
+
+    // Cleanly disable interrupts before exit/park
+    unsafe {
+        core::arch::asm!("cli", options(nomem, nostack));
+    }
 
     // Exit QEMU cleanly with success exit code
     exit_qemu(true);

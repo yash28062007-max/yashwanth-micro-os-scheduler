@@ -10,3 +10,4 @@ __pycache__/
 .vscode/
 .venv/
 hf_space/.venv/
+submission_package/
