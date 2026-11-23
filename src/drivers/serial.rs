@@ -109,8 +109,13 @@ pub fn init_serial() {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use fmt::Write;
+    // 1. Output to serial port COM1
     let mut serial = SERIAL_PORT.lock();
     let _ = serial.write_fmt(args);
+
+    // 2. Output to on-screen graphical framebuffer console
+    let mut fb = crate::drivers::framebuffer::FRAMEBUFFER_CONSOLE.lock();
+    let _ = fb.write_fmt(args);
 }
 
 /// Prints formatted text to the serial port.

@@ -93,6 +93,55 @@ pub static MEMMAP_REQUEST: LimineMemmapRequest = LimineMemmapRequest {
     response: core::ptr::null(),
 };
 
+#[repr(C)]
+pub struct LimineFramebuffer {
+    pub address: *mut u8,
+    pub width: u64,
+    pub height: u64,
+    pub pitch: u64,
+    pub bpp: u16,
+    pub memory_model: u8,
+    pub red_mask_size: u8,
+    pub red_mask_shift: u8,
+    pub green_mask_size: u8,
+    pub green_mask_shift: u8,
+    pub blue_mask_size: u8,
+    pub blue_mask_shift: u8,
+    pub unused: [u8; 7],
+    pub edid_size: u64,
+    pub edid: *const u8,
+}
+
+#[repr(C)]
+pub struct LimineFramebufferResponse {
+    pub revision: u64,
+    pub framebuffer_count: u64,
+    pub framebuffers: *const *const LimineFramebuffer,
+}
+
+#[repr(C)]
+pub struct LimineFramebufferRequest {
+    pub id: [u64; 4],
+    pub revision: u64,
+    pub response: *const LimineFramebufferResponse,
+}
+
+unsafe impl Sync for LimineFramebufferRequest {}
+
+// 5. Framebuffer request placed in `.limine_requests`
+#[used]
+#[link_section = ".limine_requests"]
+pub static FRAMEBUFFER_REQUEST: LimineFramebufferRequest = LimineFramebufferRequest {
+    id: [
+        0xc7b1dd30df4c8b88,
+        0x0a82e883a194f07b,
+        0x9d5827dcd881dd75,
+        0xa3148604f6fab11b,
+    ],
+    revision: 0,
+    response: core::ptr::null(),
+};
+
 // 5. Limine requests end marker placed in `.limine_requests_end`
 #[used]
 #[link_section = ".limine_requests_end"]

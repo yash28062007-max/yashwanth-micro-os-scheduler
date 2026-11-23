@@ -3,7 +3,7 @@
 
 use core::alloc::Layout;
 use yashwanth_micro_os::{
-    drivers::init_serial,
+    drivers::{init_framebuffer, init_serial},
     exit_qemu, hlt_loop,
     kernel::{init_gdt, init_idt},
     log_info, log_mem, log_sched, log_sync, log_task,
@@ -46,6 +46,9 @@ pub extern "C" fn _start() -> ! {
 
     // 1. Initialize serial port for console diagnostics
     init_serial();
+
+    // 2. Initialize graphical framebuffer console for on-screen output
+    init_framebuffer();
 
     println!("\n================================================================");
     println!("     __  __           _                             _   _       ");
