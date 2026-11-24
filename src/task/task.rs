@@ -29,6 +29,7 @@ pub struct Task {
     pub waiting_time: u32,
     pub arrival_time: u64,
     pub finish_time: u64,
+    pub first_run_time: Option<u64>,
     pub current_quantum: u32,
     pub remaining_quantum: u32,
     pub context_switch_count: u32,
@@ -58,6 +59,7 @@ impl Task {
             waiting_time: 0,
             arrival_time: 0,
             finish_time: 0,
+            first_run_time: None,
             current_quantum: initial_quantum,
             remaining_quantum: initial_quantum,
             context_switch_count: 0,
@@ -91,6 +93,14 @@ impl Task {
             self.finish_time - self.arrival_time
         } else {
             0
+        }
+    }
+
+    /// Calculates response time (first_run_time - arrival_time).
+    pub fn response_time(&self) -> u64 {
+        match self.first_run_time {
+            Some(first) if first >= self.arrival_time => first - self.arrival_time,
+            _ => 0,
         }
     }
 

@@ -1,5 +1,5 @@
 {
-  "ticks": 27,
+  "ticks": 28,
   "context_switches": 6,
   "switch_reasons": {
     "InitialSchedule": 1,

@@ -181,6 +181,9 @@ impl RoundRobinScheduler {
 
             if let Some(next_task) = self.tasks[next_id.0].as_mut() {
                 let _ = next_task.transition_to(TaskState::Running);
+                if next_task.first_run_time.is_none() {
+                    next_task.first_run_time = Some(self.total_ticks);
+                }
                 next_task.context_switch_count += 1;
 
                 // SPECIALIZATION: Dynamically compute the time quantum!

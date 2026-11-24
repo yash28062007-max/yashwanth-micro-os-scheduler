@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MicroOS — Classic Retro Desktop &amp; Snap Store</title>
+  <style>
+    /* -------------------------------------------------------------------------
+       THEME VARIABLES - DEFAULT: OLD STYLE CLASSIC (Retro 95/98 / Classic Unix)
+       ------------------------------------------------------------------------- */
+    :root {
+      --desktop-bg: #008080; /* Classic Retro Teal */
+      --window-bg: #c0c0c0; /* Classic Windows/Motif Gray */
+      --window-border: #dfdfdf;
+      --window-shadow: #808080;
+      --window-darkshadow: #000000;
+      --titlebar-bg: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+      --titlebar-inactive: linear-gradient(90deg, #808080 0%, #b5b5b5 100%);
+      --titlebar-text: #ffffff;
+      --taskbar-bg: #c0c0c0;
+      --taskbar-border: #ffffff;
+      --button-face: #c0c0c0;
+      --button-light: #ffffff;
+      --button-shadow: #808080;
+      --text-main: #000000;
+      --text-muted: #404040;
+      --font-system: "Tahoma", "MS Sans Serif", "Segoe UI", sans-serif;
+      --font-mono: "Cascadia Code", "Courier New", monospace;
+      --tray-inset: inset 1px 1px #808080, inset -1px -1px #ffffff;
+    }
+
+    /* Modern Neon Theme (Switchable) */
+    body.theme-modern {
+      --desktop-bg: #0e071c;
+      --window-bg: rgba(20, 12, 36, 0.96);
+      --window-border: rgba(255, 255, 255, 0.15);
+      --window-shadow: rgba(0, 0, 0, 0.5);
+      --titlebar-bg: rgba(15, 8, 28, 0.9);
+      --titlebar-text: #00e5ff;
+      --taskbar-bg: rgba(22, 14, 38, 0.85);
+      --button-face: rgba(255, 255, 255, 0.08);
+      --text-main: #ffffff;
+      --text-muted: #9e9eb3;
+    }
+
+    /* Classic Ubuntu Theme (Switchable) */
+    body.theme-ubuntu {
+      --desktop-bg: #300a24; /* Canonical Aubergine */
+      --window-bg: #3c3b37;
+      --window-border: #5c3566;
+      --titlebar-bg: linear-gradient(180deg, #3c3b37 0%, #2e2d29 100%);
+      --titlebar-text: #dfdbd2;
+      --taskbar-bg: #1e1d1b;
+      --text-main: #ffffff;
+      --text-muted: #aea79f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-system);
+      background-color: var(--desktop-bg);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Classic Wallpaper Pattern / Canvas */
+    .retro-wallpaper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 36px);
+      z-index: 1;
+      background: var(--desktop-bg);
+    }
+    body.theme-modern .retro-wallpaper {
+      background: linear-gradient(135deg, #0e071c 0%, #1a0b30 45%, #2a0845 70%);
+    }
+
+    /* Desktop Grid Icons */
+    .desktop-icons-grid {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap;
+      height: calc(100vh - 70px);
+      gap: 16px;
+      z-index: 10;
+      align-content: flex-start;
+    }
+
+    .desktop-shortcut {
+      width: 82px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      padding: 6px 4px;
+      border-radius: 4px;
+      text-align: center;
+      transition: background 0.15s;
+    }
+    .desktop-shortcut:hover, .desktop-shortcut.selected {
+      background: rgba(0, 0, 128, 0.45);
+      outline: 1px dotted #ffffff;
+    }
+    .shortcut-icon {
+      font-size: 36px;
+      filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.6));
+    }
+    .shortcut-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: 1px 1px 2px #000000, 0 0 4px #000000;
+      word-break: break-word;
+      line-height: 1.2;
+    }
+
+    /* -------------------------------------------------------------------------
+       CLASSIC RETRO WINDOW CHROME (Old Style 3D Bevels)
+       ------------------------------------------------------------------------- */
+    .window {
+      position: absolute;
+      background: var(--window-bg);
+      border-top: 2px solid var(--button-light);
+      border-left: 2px solid var(--button-light);
+      border-right: 2px solid var(--window-darkshadow);
+      border-bottom: 2px solid var(--window-darkshadow);
+      box-shadow: inset 1px 1px 0px #dfdfdf, inset -1px -1px 0px var(--button-shadow), 3px 3px 12px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 30;
+      min-width: 320px;
+      min-height: 200px;
+    }
+    .window.active-window {
+      z-index: 50;
+    }
+    .window.active-window .window-titlebar {
+      background: var(--titlebar-bg);
+      color: var(--titlebar-text);
+    }
+    .window.minimized {
+      display: none !important;
+    }
+
+    .window-titlebar {
+      height: 24px;
+      background: var(--titlebar-inactive);
+      color: #d0d0d0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 4px;
+      cursor: move;
+      font-weight: bold;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+    }
+
+    .titlebar-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .titlebar-icon { font-size: 14px; }
+
+    .titlebar-controls {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* Old Style Beveled Square Buttons */
+    .retro-btn-box {
+      width: 17px;
+      height: 15px;
+      background: var(--button-face);
+      border-top: 1px solid var(--button-light);
+      border-left: 1px solid var(--button-light);
+      border-right: 1px solid var(--window-darkshadow);
+      border-bottom: 1px solid var(--window-darkshadow);
+      box-shadow: inset -1px -1px var(--button-shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      color: #000000;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .retro-btn-box:active {
+      border-top: 1px solid var(--window-darkshadow);
+      border-left: 1px solid var(--window-darkshadow);
+      border-right: 1px solid var(--button-light);
+      border-bottom: 1px solid var(--button-light);
+      box-shadow: none;
+      padding-top: 1px;
+      padding-left: 1px;
+    }
+
+    .window-body {
+      flex: 1;
+      overflow: auto;
+      background: #ffffff;
+      border: 2px inset #dfdfdf;
+      margin: 3px;
+      position: relative;
+    }
+
+    /* -------------------------------------------------------------------------
+       TERMINAL WINDOW (/bin/sh)
+       ------------------------------------------------------------------------- */
+    .terminal-body {
+      background: #000000;
+      color: #00ff66;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.45;
+      padding: 12px;
+      height: 100%;
+      overflow-y: auto;
+    }
+    .ascii-banner {
+      color: #00e5ff;
+      font-weight: bold;
+      white-space: pre;
+      line-height: 1.15;
+      margin-bottom: 8px;
+    }
+    .term-prompt { color: #ffff00; font-weight: bold; }
+    .term-line { margin-bottom: 4px; word-break: break-all; }
+    .term-input-row { display: flex; align-items: center; gap: 4px; }
+    .term-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: inherit;
+      flex: 1;
+    }
+
+    /* -------------------------------------------------------------------------
+       SNAP STORE (MicroOS Software Center)
+       ------------------------------------------------------------------------- */
+    .snap-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: #f4f4f7;
+      color: #222;
+      font-family: var(--font-system);
+    }
+    .snap-header {
+      background: #ffffff;
+      border-bottom: 1px solid #dcdce0;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .snap-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      color: #e95420; /* Canonical Ubuntu Orange */
+    }
+    .snap-search-box {
+      flex: 1;
+      max-width: 320px;
+      background: #f0f0f4;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12.5px;
+      outline: none;
+    }
+    .snap-nav-tabs {
+      display: flex;
+      gap: 6px;
+    }
+    .snap-tab-btn {
+      padding: 4px 12px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .snap-tab-btn.active {
+      background: #e95420;
+      color: #fff;
+      border-color: #e95420;
+    }
+    .snap-content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    .snap-banner-hero {
+      background: linear-gradient(135deg, #77216f 0%, #5e2750 50%, #e95420 100%);
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .snap-grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+    .snap-app-card {
+      background: #ffffff;
+      border: 1px solid #e0e0e4;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .snap-app-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 14px rgba(0,0,0,0.1);
+    }
+    .snap-card-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .snap-card-icon {
+      font-size: 28px;
+      width: 40px;
+      height: 40px;
+      background: #f4f4f8;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .snap-card-info h4 {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #111;
+    }
+    .snap-card-info span {
+      font-size: 11px;
+      color: #666;
+    }
+    .snap-card-desc {
+      font-size: 12px;
+      color: #444;
+      line-height: 1.35;
+      flex: 1;
+    }
+    .snap-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .snap-install-btn {
+      background: #0e8420;
+      color: #fff;
+      border: none;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 11.5px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .snap-install-btn:hover { background: #0a6618; }
+    .snap-install-btn.installed { background: #555; cursor: default; }
+    .snap-install-btn.open { background: #0078d4; }
+
+    /* -------------------------------------------------------------------------
+       WI-FI CONNECTIONS WINDOW (Matching Real Device Hardware)
+       ------------------------------------------------------------------------- */
+    .wifi-container {
+      background: #1e1e24;
+      color: #f0f0f5;
+      padding: 16px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-family: var(--font-system);
+    }
+    .wifi-header-info {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 10px 14px;
+    }
+    .wifi-network-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .wifi-network-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: #00e5ff;
+    }
+    .wifi-network-card.connected {
+      background: rgba(0, 229, 255, 0.12);
+      border: 1px solid #00e5ff;
+    }
+    .wifi-ssid-title {
+      font-weight: 700;
+      font-size: 13.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .wifi-badge-connected {
+      background: #00e676;
+      color: #000;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .wifi-disconnect-btn {
+      background: #444;
+      color: #fff;
+      border: 1px solid #666;
+      border-radius: 4px;
+      padding: 4px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .wifi-disconnect-btn:hover { background: #d32f2f; }
+
+    /* -------------------------------------------------------------------------
+       CLASSIC RETRO TASKBAR (Bottom Bar)
+       ------------------------------------------------------------------------- */
+    .retro-taskbar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 36px;
+      background: var(--taskbar-bg);
+      border-top: 2px solid var(--button-light);
+      box-shadow: inset 0 1px 0 #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 4px;
+      z-index: 100;
+    }
+
+    .start-btn {
+      height: 28px;
+      padding: 2px 8px;
+      background: var(--button-face);
+      border-top: 2px solid var(--button-light);
+      border-left: 2px solid var(--button-light);
+      border-right: 2px solid var(--window-darkshadow);
+      border-bottom: 2px solid var(--window-darkshadow);
+      box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px var(--button-shadow);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .start-btn:active, .start-btn.active {
+      border-top: 2px solid var(--window-darkshadow);
+      border-left: 2px solid var(--window-darkshadow);
+      border-right: 2px solid var(--button-light);
+      border-bottom: 2px solid var(--button-light);
+      box-shadow: none;
+      padding-top: 4px;
+      padding-left: 10px;
+    }
+
+    .taskbar-tasks-row {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin: 0 8px;
+      overflow-x: auto;
+    }
+
+    .taskbar-item-btn {
+      height: 26px;
+      min-width: 120px;
+      max-width: 180px;
+      background: var(--button-face);
+      border-top: 2px solid var(--button-light);
+      border-left: 2px solid var(--button-light);
+      border-right: 2px solid var(--window-darkshadow);
+      border-bottom: 2px solid var(--window-darkshadow);
+      box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px var(--button-shadow);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .taskbar-item-btn.active {
+      background: #d8d8d8;
+      border-top: 2px solid var(--window-darkshadow);
+      border-left: 2px solid var(--window-darkshadow);
+      border-right: 2px solid var(--button-light);
+      border-bottom: 2px solid var(--button-light);
+      box-shadow: none;
+      font-weight: bold;
+    }
+
+    .system-tray {
+      height: 26px;
+      border-top: 2px solid var(--button-shadow);
+      border-left: 2px solid var(--button-shadow);
+      border-right: 2px solid var(--button-light);
+      border-bottom: 2px solid var(--button-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .tray-wifi-pill {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 4px;
+      border-radius: 2px;
+    }
+    .tray-wifi-pill:hover { background: rgba(0,0,0,0.1); }
+
+    /* -------------------------------------------------------------------------
+       CLASSIC START MENU (Retro 95/98 Cascading Menu)
+       ------------------------------------------------------------------------- */
+    .start-menu {
+      position: absolute;
+      bottom: 36px;
+      left: 2px;
+      width: 250px;
+      background: var(--window-bg);
+      border-top: 2px solid var(--button-light);
+      border-left: 2px solid var(--button-light);
+      border-right: 2px solid var(--window-darkshadow);
+      border-bottom: 2px solid var(--window-darkshadow);
+      box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
+      display: none;
+      flex-direction: row;
+      z-index: 200;
+    }
+    .start-menu.open { display: flex; }
+    .start-banner-strip {
+      width: 28px;
+      background: linear-gradient(180deg, #000080 0%, #1084d0 100%);
+      color: #ffffff;
+      writing-mode: vertical-lr;
+      transform: rotate(180deg);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 10px 4px;
+      font-weight: bold;
+      font-size: 15px;
+      letter-spacing: 2px;
+    }
+    .start-menu-items {
+      flex: 1;
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .start-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .start-item:hover {
+      background: #000080;
+      color: #ffffff;
+    }
+    .start-divider {
+      height: 1px;
+      background: var(--button-shadow);
+      border-bottom: 1px solid var(--button-light);
+      margin: 4px 0;
+    }
+
+    /* -------------------------------------------------------------------------
+       ARCADE GAMES & TOOLS CONTAINER
+       ------------------------------------------------------------------------- */
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      height: 100%;
+      background: #110722;
+      color: #ffffff;
+    }
+    .game-canvas {
+      border: 2px inset #dfdfdf;
+      background: #000000;
+    }
+
+    /* Retro Calculator */
+    .calc-container {
+      background: #c0c0c0;
+      padding: 10px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .calc-screen {
+      background: #ffffff;
+      border: 2px inset #808080;
+      height: 36px;
+      padding: 4px 8px;
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .calc-buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      flex: 1;
+    }
+    .calc-btn {
+      background: var(--button-face);
+      border-top: 2px solid var(--button-light);
+      border-left: 2px solid var(--button-light);
+      border-right: 2px solid var(--window-darkshadow);
+      border-bottom: 2px solid var(--window-darkshadow);
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .calc-btn:active {
+      border-top: 2px solid var(--window-darkshadow);
+      border-left: 2px solid var(--window-darkshadow);
+      border-right: 2px solid var(--button-light);
+      border-bottom: 2px solid var(--button-light);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Retro Teal Wallpaper -->
+  <div class="retro-wallpaper"></div>
+
+  <!-- Desktop Grid Shortcuts (Old Style System Icons) -->
+  <main class="desktop-icons-grid">
+    <div class="desktop-shortcut" onclick="openWindow('winSnapStore')">
+      <div class="shortcut-icon">🛍️</div>
+      <div class="shortcut-label">Snap Store</div>
+    </div>
+    <div class="desktop-shortcut" onclick="openWindow('winTerminal')">
+      <div class="shortcut-icon">💻</div>
+      <div class="shortcut-label">Developer Terminal</div>
+    </div>
+    <div class="desktop-shortcut" onclick="openWindow('winWifi')">
+      <div class="shortcut-icon">📶</div>
+      <div class="shortcut-label" id="desktopWifiLabel">Wi-Fi (MOJO-JAN-B-F5)</div>
+    </div>
+    <div class="desktop-shortcut" onclick="openWindow('winSnake')">
+      <div class="shortcut-icon">🐍</div>
+      <div class="shortcut-label">Snake Game</div>
+    </div>
+    <div class="desktop-shortcut" onclick="openWindow('winTetris')">
+      <div class="shortcut-icon">🧱</div>
+      <div class="shortcut-label">Tetris Arcade</div>
+    </div>
+    <div class="desktop-shortcut" onclick="openWindow('win2048')">
+      <div class="shortcut-icon">🔢</div>
+      <div class="shortcut-label">2048 Puzzle</div>
+    </div>
+    <div class="desktop-shortcut" onclick="openWindow('winPong')">
+      <div class="shortcut-icon">🏓</div>
+      <div class="shortcut-label">Pong Classic</div>
+    </div>
+    <div class="desktop-shortcut" onclick="openWindow('winMinesweeper')">
+      <div class="shortcut-icon">💣</div>
+      <div class="shortcut-label">Minesweeper</div>
+    </div>
+    <div class="desktop-shortcut" onclick="openWindow('winCalc')">
+      <div class="shortcut-icon">🧮</div>
+      <div class="shortcut-label">Calculator</div>
+    </div>
+  </main>
+
+  <!-- =======================================================================
+       WINDOW 1: SNAP STORE (MicroOS Software Center)
+       ======================================================================= -->
+  <div class="window active-window" id="winSnapStore" style="left: 140px; top: 40px; width: 680px; height: 480px;">
+    <div class="window-titlebar" onmousedown="startDrag(event, 'winSnapStore')">
+      <div class="titlebar-left">
+        <span class="titlebar-icon">🛍️</span>
+        <span>Snap Store — MicroOS Software Hub</span>
+      </div>
+      <div class="titlebar-controls">
+        <div class="retro-btn-box" onclick="minimizeWindow('winSnapStore')">_</div>
+        <div class="retro-btn-box" onclick="maximizeWindow('winSnapStore')">□</div>
+        <div class="retro-btn-box" onclick="closeWindow('winSnapStore')">✕</div>
+      </div>
+    </div>
+    <div class="window-body">
+      <div class="snap-container">
+        <!-- Snap Store Header -->
+        <div class="snap-header">
+          <div class="snap-logo-row">
+            <span>🛍️</span>
+            <span>Snap Store</span>
+          </div>
+          <input type="text" class="snap-search-box" id="snapSearchInput" placeholder="Search apps, utilities, and games..." oninput="filterSnapApps(this.value)">
+          <div class="snap-nav-tabs">
+            <button class="snap-tab-btn active" onclick="switchSnapTab('explore', this)">Explore</button>
+            <button class="snap-tab-btn" onclick="switchSnapTab('installed', this)">Installed</button>
+            <button class="snap-tab-btn" onclick="switchSnapTab('updates', this)">Updates</button>
+          </div>
+        </div>
+
+        <!-- Snap Store Content -->
+        <div class="snap-content-area" id="snapContentArea">
+          <div class="snap-banner-hero">
+            <div>
+              <h2 style="font-size: 18px; margin-bottom: 4px;">MicroOS Package Ecosystem</h2>
+              <p style="font-size: 12px; opacity: 0.9;">Universal sandbox applications with verified binaries and kernel companion tools.</p>
+            </div>
+            <button class="snap-install-btn open" onclick="openWindow('winTerminal'); runTermCommand('snap list');">CLI: snap list</button>
+          </div>
+
+          <div class="snap-grid-cards" id="snapAppsGrid">
+            <!-- App: Developer Terminal -->
+            <div class="snap-app-card" data-installed="true">
+              <div class="snap-card-top">
+                <div class="snap-card-icon">💻</div>
+                <div class="snap-card-info">
+                  <h4>Developer Terminal</h4>
+                  <span>v5.2.0 • Canonical</span>
+                </div>
+              </div>
+              <div class="snap-card-desc">x86_64 Long Mode kernel shell with dynamic quantum scheduler diagnostics and hardware traces.</div>
+              <div class="snap-card-footer">
+                <span style="font-size: 11px; color: #777;">Installed (4.2 MB)</span>
+                <button class="snap-install-btn open" onclick="openWindow('winTerminal')">Open</button>
+              </div>
+            </div>
+
+            <!-- App: Wi-Fi Device Manager -->
+            <div class="snap-app-card" data-installed="true">
+              <div class="snap-card-top">
+                <div class="snap-card-icon">📶</div>
+                <div class="snap-card-info">
+                  <h4>Wi-Fi Manager</h4>
+                  <span>v2.4.1 • Network</span>
+                </div>
+              </div>
+              <div class="snap-card-desc">Connected to <strong>MOJO-JAN-B-F6</strong> (Realtek 8822CE 802.11ac NIC, 100% Signal).</div>
+              <div class="snap-card-footer">
+                <span style="font-size: 11px; color: #777;">Connected (100%)</span>
+                <button class="snap-install-btn open" onclick="openWindow('winWifi')">Configure</button>
+              </div>
+            </div>
+
+            <!-- App: Snake Arcade -->
+            <div class="snap-app-card" data-installed="true">
+              <div class="snap-card-top">
+                <div class="snap-card-icon">🐍</div>
+                <div class="snap-card-info">
+                  <h4>Snake Arcade</h4>
+                  <span>v1.2.0 • Retro Games</span>
+                </div>
+              </div>
+              <div class="snap-card-desc">Classic 8-bit snake game with high-score tracking and arrow key controls.</div>
+              <div class="snap-card-footer">
+                <span style="font-size: 11px; color: #777;">Installed (820 KB)</span>
+                <button class="snap-install-btn open" onclick="openWindow('winSnake')">Play</button>
+              </div>
+            </div>
+
+            <!-- App: Tetris Arcade -->
+            <div class="snap-app-card" data-installed="true">
+              <div class="snap-card-top">
+                <div class="snap-card-icon">🧱</div>
+                <div class="snap-card-info">
+                  <h4>Tetris Classic</h4>
+                  <span>v2.0.1 • Arcade</span>
+                </div>
+              </div>
+              <div class="snap-card-desc">Original block-stacking arcade with rotation, line clearing, and speed levels.</div>
+              <div class="snap-card-footer">
+                <span style="font-size: 11px; color: #777;">Installed (1.1 MB)</span>
+                <button class="snap-install-btn open" onclick="openWindow('winTetris')">Play</button>
+              </div>
+            </div>
+
+            <!-- App: 2048 Puzzle -->
+            <div class="snap-app-card" data-installed="true">
+              <div class="snap-card-top">
+                <div class="snap-card-icon">🔢</div>
+                <div class="snap-card-info">
+                  <h4>2048 Puzzle</h4>
+                  <span>v1.0.4 • Puzzle</span>
+                </div>
+              </div>
+              <div class="snap-card-desc">Slide numbered tiles to merge them into the legendary 2048 block.</div>
+              <div class="snap-card-footer">
+                <span style="font-size: 11px; color: #777;">Installed (640 KB)</span>
+                <button class="snap-install-btn open" onclick="openWindow('win2048')">Play</button>
+              </div>
+            </div>
+
+            <!-- App: Minesweeper -->
+            <div class="snap-app-card" data-installed="true">
+              <div class="snap-card-top">
+                <div class="snap-card-icon">💣</div>
+                <div class="snap-card-info">
+                  <h4>Minesweeper</h4>
+                  <span>v3.2.0 • Classic</span>
+                </div>
+              </div>
+              <div class="snap-card-desc">Classic 9x9 minefield with digital LCD timer and flagging.</div>
+              <div class="snap-card-footer">
+                <span style="font-size: 11px; color: #777;">Installed (512 KB)</span>
+                <button class="snap-install-btn open" onclick="openWindow('winMinesweeper')">Play</button>
+              </div>
+            </div>
+
+            <!-- App: Scientific Calculator -->
+            <div class="snap-app-card" id="cardCalc" data-installed="true">
+              <div class="snap-card-top">
+                <div class="snap-card-icon">🧮</div>
+                <div class="snap-card-info">
+                  <h4>Retro Calculator</h4>
+                  <span>v1.5.0 • Utilities</span>
+                </div>
+              </div>
+              <div class="snap-card-desc">Classic beveled pocket calculator with arithmetic operations.</div>
+              <div class="snap-card-footer">
+                <span style="font-size: 11px; color: #777;">Installed (320 KB)</span>
+                <button class="snap-install-btn open" onclick="openWindow('winCalc')">Open</button>
+              </div>
+            </div>
+
+            <!-- App: Pixel Paint (Installable) -->
+            <div class="snap-app-card" id="cardPaint" data-installed="false">
+              <div class="snap-card-top">
+                <div class="snap-card-icon">🎨</div>
+                <div class="snap-card-info">
+                  <h4>Pixel Paint Pro</h4>
+                  <span>v2.1.0 • Graphics</span>
+                </div>
+              </div>
+              <div class="snap-card-desc">Retro drawing canvas with color palette and pixel brush tools.</div>
+              <div class="snap-card-footer">
+                <span style="font-size: 11px; color: #777;">Package size: 1.8 MB</span>
+                <button class="snap-install-btn" id="btnInstallPaint" onclick="installSnapApp('cardPaint', 'winPaint', 'btnInstallPaint')">Install</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       WINDOW 2: WI-FI CONNECTIONS (Shows User's Connected Device Wi-Fi)
+       ======================================================================= -->
+  <div class="window" id="winWifi" style="left: 220px; top: 60px; width: 480px; height: 420px; display: none;">
+    <div class="window-titlebar" onmousedown="startDrag(event, 'winWifi')">
+      <div class="titlebar-left">
+        <span class="titlebar-icon">📶</span>
+        <span>Wi-Fi Connections — Hardware Radio</span>
+      </div>
+      <div class="titlebar-controls">
+        <div class="retro-btn-box" onclick="minimizeWindow('winWifi')">_</div>
+        <div class="retro-btn-box" onclick="closeWindow('winWifi')">✕</div>
+      </div>
+    </div>
+    <div class="window-body">
+      <div class="wifi-container">
+        <!-- Live Hardware NIC Banner -->
+        <div class="wifi-header-info">
+          <div style="font-size: 11.5px; color: #8be9fd; margin-bottom: 4px;">DEVICE HARDWARE INTERFACE:</div>
+          <div style="font-weight: bold; font-size: 13px; color: #ffffff;">Realtek 8822CE Wireless LAN 802.11ac PCI-E NIC</div>
+          <div style="font-size: 11px; color: #aaa; margin-top: 4px; display: flex; gap: 14px;">
+            <span>MAC: 00:45:e2:ad:9e:cc</span>
+            <span>Speed: 270 Mbps</span>
+            <span>Radio: 802.11n (2.4 GHz)</span>
+          </div>
+        </div>
+
+        <div style="font-size: 12px; font-weight: bold; color: #ffffff; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+          <span>Visible Networks (Connected Device):</span>
+          <button style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #8be9fd; font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer;" onclick="refreshWifiScan()">🔄 Rescan</button>
+        </div>
+
+        <div id="wifiNetworkList" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 250px;">
+          <!-- Dynamically populated by renderWifiUI() -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       WINDOW 3: DEVELOPER TERMINAL (/bin/sh)
+       ======================================================================= -->
+  <div class="window" id="winTerminal" style="left: 170px; top: 70px; width: 580px; height: 380px; display: none;">
+    <div class="window-titlebar" onmousedown="startDrag(event, 'winTerminal')">
+      <div class="titlebar-left">
+        <span class="titlebar-icon">💻</span>
+        <span>Developer Terminal — /bin/sh</span>
+      </div>
+      <div class="titlebar-controls">
+        <div class="retro-btn-box" onclick="minimizeWindow('winTerminal')">_</div>
+        <div class="retro-btn-box" onclick="maximizeWindow('winTerminal')">□</div>
+        <div class="retro-btn-box" onclick="closeWindow('winTerminal')">✕</div>
+      </div>
+    </div>
+    <div class="window-body terminal-body" id="termBody" onclick="focusTermInput()">
+      <pre class="ascii-banner">
+ __  __ _            ___  ____  
+|  \/  (_) ___ _ __ / _ \/ ___| 
+| |\/| | |/ __| '__| | | \___ \ 
+| |  | | | (__| |  | |_| |___) |
+|_|  |_|_|\___|_|   \___/|____/ 
+      </pre>
+      <div style="color: #00e5ff; margin-bottom: 4px;" id="termWifiBanner">MicroOS v5.2 (x86_64 Long Mode) — Connected: MOJO-JAN-B-F5</div>
+      <div style="color: #8be9fd; margin-bottom: 12px;">Type 'help' for available commands. Try 'snap', 'wifi', 'sched'.</div>
+      <div id="termHistory">
+        <div class="term-line"><span class="term-prompt">yeshwanth@microos:~$</span> who am i</div>
+        <div class="term-line" style="color: #00ff66;">yeshwanth</div>
+        <div class="term-line"><span class="term-prompt">yeshwanth@microos:~$</span> iwconfig</div>
+        <div class="term-line" style="color: #00ff66;">wlan0: IEEE 802.11ac ESSID:"MOJO-JAN-B-F5" Mode:Managed Frequency:2.412GHz Access Point: 3C:52:A1:05:AE:DA Bit Rate=270 Mb/s Link Quality=100/100 Signal level=-61 dBm</div>
+      </div>
+      <div class="term-input-row">
+        <span class="term-prompt">yeshwanth@microos:~$</span>
+        <input type="text" class="term-input" id="termInput" autocomplete="off" spellcheck="false" autofocus onkeydown="if(event.key==='Enter'||event.keyCode===13){handleTermEnter(event);}">
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       WINDOW 4: RETRO CALCULATOR (Old Style)
+       ======================================================================= -->
+  <div class="window" id="winCalc" style="left: 310px; top: 100px; width: 260px; height: 320px; display: none;">
+    <div class="window-titlebar" onmousedown="startDrag(event, 'winCalc')">
+      <div class="titlebar-left">
+        <span class="titlebar-icon">🧮</span>
+        <span>Calculator</span>
+      </div>
+      <div class="titlebar-controls">
+        <div class="retro-btn-box" onclick="closeWindow('winCalc')">✕</div>
+      </div>
+    </div>
+    <div class="window-body" style="background: var(--button-face);">
+      <div class="calc-container">
+        <div class="calc-screen" id="calcDisplay">0</div>
+        <div class="calc-buttons-grid">
+          <button class="calc-btn" onclick="calcInput('C')">C</button>
+          <button class="calc-btn" onclick="calcInput('/')">/</button>
+          <button class="calc-btn" onclick="calcInput('*')">*</button>
+          <button class="calc-btn" onclick="calcInput('-')">-</button>
+          <button class="calc-btn" onclick="calcInput('7')">7</button>
+          <button class="calc-btn" onclick="calcInput('8')">8</button>
+          <button class="calc-btn" onclick="calcInput('9')">9</button>
+          <button class="calc-btn" onclick="calcInput('+')">+</button>
+          <button class="calc-btn" onclick="calcInput('4')">4</button>
+          <button class="calc-btn" onclick="calcInput('5')">5</button>
+          <button class="calc-btn" onclick="calcInput('6')">6</button>
+          <button class="calc-btn" onclick="calcInput('=')" style="grid-row: span 2; background: #000080; color: #fff;">=</button>
+          <button class="calc-btn" onclick="calcInput('1')">1</button>
+          <button class="calc-btn" onclick="calcInput('2')">2</button>
+          <button class="calc-btn" onclick="calcInput('3')">3</button>
+          <button class="calc-btn" onclick="calcInput('0')" style="grid-column: span 2;">0</button>
+          <button class="calc-btn" onclick="calcInput('.')">.</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WINDOW 5: SNAKE GAME -->
+  <div class="window" id="winSnake" style="left: 200px; top: 60px; width: 400px; height: 460px; display: none;">
+    <div class="window-titlebar" onmousedown="startDrag(event, 'winSnake')">
+      <div class="titlebar-left"><span>🐍 Snake Arcade</span></div>
+      <div class="titlebar-controls"><div class="retro-btn-box" onclick="closeWindow('winSnake')">✕</div></div>
+    </div>
+    <div class="window-body game-container">
+      <div style="display: flex; gap: 20px; font-weight: bold; margin-bottom: 8px;">
+        <div>SCORE: <span id="snakeScore" style="color: #00ff66;">0</span></div>
+        <div>HIGH: <span id="snakeHigh" style="color: #ffff00;">0</span></div>
+      </div>
+      <canvas id="snakeCanvas" class="game-canvas" width="340" height="320"></canvas>
+      <div style="font-size: 11px; margin-top: 8px; color: #aaa;">Arrow Keys / WASD • Space to Restart</div>
+    </div>
+  </div>
+
+  <!-- WINDOW 6: TETRIS ARCADE -->
+  <div class="window" id="winTetris" style="left: 240px; top: 50px; width: 380px; height: 490px; display: none;">
+    <div class="window-titlebar" onmousedown="startDrag(event, 'winTetris')">
+      <div class="titlebar-left"><span>🧱 Tetris Classic</span></div>
+      <div class="titlebar-controls"><div class="retro-btn-box" onclick="closeWindow('winTetris')">✕</div></div>
+    </div>
+    <div class="window-body game-container">
+      <div style="display: flex; gap: 20px; font-weight: bold; margin-bottom: 8px;">
+        <div>SCORE: <span id="tetrisScore" style="color: #00e5ff;">0</span></div>
+        <div>LINES: <span id="tetrisLines" style="color: #ff9100;">0</span></div>
+      </div>
+      <canvas id="tetrisCanvas" class="game-canvas" width="240" height="360"></canvas>
+      <div style="font-size: 11px; margin-top: 8px; color: #aaa;">← → Move • ↑ Rotate • ↓ Drop • Space Hard Drop</div>
+    </div>
+  </div>
+
+  <!-- WINDOW 7: 2048 PUZZLE -->
+  <div class="window" id="win2048" style="left: 260px; top: 70px; width: 360px; height: 420px; display: none;">
+    <div class="window-titlebar" onmousedown="startDrag(event, 'win2048')">
+      <div class="titlebar-left"><span>🔢 2048 Puzzle</span></div>
+      <div class="titlebar-controls"><div class="retro-btn-box" onclick="closeWindow('win2048')">✕</div></div>
+    </div>
+    <div class="window-body game-container">
+      <div style="display: flex; justify-content: space-between; width: 280px; margin-bottom: 8px;">
+        <div>SCORE: <span id="score2048" style="color: #ffab00; font-weight: bold;">0</span></div>
+        <button onclick="init2048()" style="padding: 2px 8px; cursor: pointer;">New Game</button>
+      </div>
+      <div id="grid2048" style="display: grid; grid-template-columns: repeat(4, 60px); gap: 6px; background: #333; padding: 8px; border-radius: 4px;"></div>
+    </div>
+  </div>
+
+  <!-- WINDOW 8: MINESWEEPER -->
+  <div class="window" id="winMinesweeper" style="left: 280px; top: 80px; width: 300px; height: 380px; display: none;">
+    <div class="window-titlebar" onmousedown="startDrag(event, 'winMinesweeper')">
+      <div class="titlebar-left"><span>💣 Minesweeper</span></div>
+      <div class="titlebar-controls"><div class="retro-btn-box" onclick="closeWindow('winMinesweeper')">✕</div></div>
+    </div>
+    <div class="window-body game-container" style="background: var(--button-face);">
+      <div style="display: flex; justify-content: space-between; width: 240px; background: #000; padding: 4px 8px; margin-bottom: 8px; border: 2px inset #808080;">
+        <span id="mineCountLcd" style="color: #ff0000; font-family: monospace; font-size: 18px; font-weight: bold;">010</span>
+        <span id="mineSmiley" style="font-size: 18px; cursor: pointer;" onclick="initMinesweeper()">😊</span>
+        <span id="mineTimeLcd" style="color: #ff0000; font-family: monospace; font-size: 18px; font-weight: bold;">000</span>
+      </div>
+      <div id="mineGrid" style="display: grid; grid-template-columns: repeat(9, 26px); gap: 1px; background: #808080; border: 2px inset #fff; padding: 2px;"></div>
+    </div>
+  </div>
+
+  <!-- WINDOW 9: PONG CLASSIC -->
+  <div class="window" id="winPong" style="left: 300px; top: 90px; width: 460px; height: 380px; display: none;">
+    <div class="window-titlebar" onmousedown="startDrag(event, 'winPong')">
+      <div class="titlebar-left"><span>🏓 Pong Classic</span></div>
+      <div class="titlebar-controls"><div class="retro-btn-box" onclick="closeWindow('winPong')">✕</div></div>
+    </div>
+    <div class="window-body game-container">
+      <div style="display: flex; gap: 20px; font-weight: bold; margin-bottom: 8px;">
+        <div>PLAYER: <span id="pongP1" style="color: #00e5ff;">0</span></div>
+        <div>CPU: <span id="pongCPU" style="color: #ff5252;">0</span></div>
+      </div>
+      <canvas id="pongCanvas" class="game-canvas" width="420" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       CLASSIC RETRO TASKBAR
+       ======================================================================= -->
+  <footer class="retro-taskbar">
+    <!-- Start Button -->
+    <div class="start-btn" id="startBtn" onclick="toggleStartMenu()">
+      <span style="font-size: 14px;">❖</span>
+      <span>Start</span>
+    </div>
+
+    <!-- Active Window Task Buttons -->
+    <div class="taskbar-tasks-row" id="taskbarTasksRow"></div>
+
+    <!-- System Tray Inset -->
+    <div class="system-tray">
+      <div class="tray-wifi-pill" onclick="openWindow('winWifi')" id="trayWifiPill" title="Wi-Fi: MOJO-JAN-B-F5 (Connected, 100%)">
+        <span>📶</span>
+        <span style="color: #008000;" id="trayWifiSsid">MOJO-JAN-B-F5</span>
+      </div>
+      <div title="Volume: 100%">🔊</div>
+      <div id="trayClock">19:02</div>
+    </div>
+  </footer>
+
+  <!-- Cascading Start Menu (Old Style 95/98) -->
+  <div class="start-menu" id="startMenu">
+    <div class="start-banner-strip">MicroOS 98</div>
+    <div class="start-menu-items">
+      <div class="start-item" onclick="openWindow('winSnapStore'); toggleStartMenu();">🛍️ Snap Store</div>
+      <div class="start-item" onclick="openWindow('winTerminal'); toggleStartMenu();">💻 Developer Terminal</div>
+      <div class="start-item" onclick="openWindow('winWifi'); toggleStartMenu();" id="startWifiItem">📶 Wi-Fi (MOJO-JAN-B-F5)</div>
+      <div class="start-divider"></div>
+      <div class="start-item" onclick="openWindow('winSnake'); toggleStartMenu();">🐍 Snake Game</div>
+      <div class="start-item" onclick="openWindow('winTetris'); toggleStartMenu();">🧱 Tetris Arcade</div>
+      <div class="start-item" onclick="openWindow('win2048'); toggleStartMenu();">🔢 2048 Puzzle</div>
+      <div class="start-item" onclick="openWindow('winMinesweeper'); toggleStartMenu();">💣 Minesweeper</div>
+      <div class="start-item" onclick="openWindow('winPong'); toggleStartMenu();">🏓 Pong Classic</div>
+      <div class="start-item" onclick="openWindow('winCalc'); toggleStartMenu();">🧮 Calculator</div>
+      <div class="start-divider"></div>
+      <div class="start-item" onclick="cycleTheme(); toggleStartMenu();">🎨 Switch Theme (Retro/Neon/Ubuntu)</div>
+      <div class="start-item" onclick="openWindow('winTerminal'); runTermCommand('sched'); toggleStartMenu();">⏱️ Run Scheduler</div>
+      <div class="start-divider"></div>
+      <div class="start-item" onclick="alert('Shutting down MicroOS...'); toggleStartMenu();">⏻ Shut Down...</div>
+    </div>
+  </div>
+
+  <!-- SCRIPT ENGINE -->
+  <script>
+    // -------------------------------------------------------------------------
+    // Real-Time Clock
+    // -------------------------------------------------------------------------
+    function updateClock() {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      document.getElementById('trayClock').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // -------------------------------------------------------------------------
+    // Theme Switcher (Old Style Retro 95/98, Modern Neon, Classic Ubuntu)
+    // -------------------------------------------------------------------------
+    let currentThemeIdx = 0;
+    const themes = ['theme-retro', 'theme-modern', 'theme-ubuntu'];
+    function cycleTheme() {
+      document.body.classList.remove('theme-modern', 'theme-ubuntu');
+      currentThemeIdx = (currentThemeIdx + 1) % themes.length;
+      if (themes[currentThemeIdx] !== 'theme-retro') {
+        document.body.classList.add(themes[currentThemeIdx]);
+      }
+      appendTermOutput(`[THEME] Switched visual theme to: ${themes[currentThemeIdx]}`);
+    }
+
+    // -------------------------------------------------------------------------
+    // Window Management & Taskbar Sync
+    // -------------------------------------------------------------------------
+    let topZ = 100;
+    let activeDrag = null;
+    let dragOffset = { x: 0, y: 0 };
+
+    function openWindow(winId) {
+      const win = document.getElementById(winId);
+      if (!win) return;
+      win.style.display = 'flex';
+      win.classList.remove('minimized');
+      bringToFront(win);
+      syncTaskbar();
+
+      if (winId === 'winSnake') initSnake();
+      if (winId === 'winTetris') initTetris();
+      if (winId === 'win2048') init2048();
+      if (winId === 'winMinesweeper') initMinesweeper();
+      if (winId === 'winPong') initPong();
+      if (winId === 'winTerminal') focusTermInput();
+    }
+
+    function closeWindow(winId) {
+      const win = document.getElementById(winId);
+      if (win) {
+        win.style.display = 'none';
+        syncTaskbar();
+      }
+    }
+
+    function minimizeWindow(winId) {
+      const win = document.getElementById(winId);
+      if (win) {
+        win.classList.add('minimized');
+        syncTaskbar();
+      }
+    }
+
+    function maximizeWindow(winId) {
+      const win = document.getElementById(winId);
+      if (!win) return;
+      if (win.dataset.maximized === 'true') {
+        win.style.left = win.dataset.origLeft || '140px';
+        win.style.top = win.dataset.origTop || '40px';
+        win.style.width = win.dataset.origWidth || '580px';
+        win.style.height = win.dataset.origHeight || '400px';
+        win.dataset.maximized = 'false';
+      } else {
+        win.dataset.origLeft = win.style.left;
+        win.dataset.origTop = win.style.top;
+        win.dataset.origWidth = win.style.width;
+        win.dataset.origHeight = win.style.height;
+        win.style.left = '0px';
+        win.style.top = '0px';
+        win.style.width = '100vw';
+        win.style.height = 'calc(100vh - 36px)';
+        win.dataset.maximized = 'true';
+      }
+    }
+
+    function bringToFront(win) {
+      topZ += 2;
+      win.style.zIndex = topZ;
+      document.querySelectorAll('.window').forEach(w => w.classList.remove('active-window'));
+      win.classList.add('active-window');
+      syncTaskbar();
+    }
+
+    function startDrag(e, winId) {
+      const win = document.getElementById(winId);
+      bringToFront(win);
+      activeDrag = win;
+      const rect = win.getBoundingClientRect();
+      dragOffset.x = e.clientX - rect.left;
+      dragOffset.y = e.clientY - rect.top;
+      document.addEventListener('mousemove', onDragMove);
+      document.addEventListener('mouseup', onDragEnd);
+    }
+
+    function onDragMove(e) {
+      if (!activeDrag) return;
+      const x = Math.max(0, Math.min(window.innerWidth - 100, e.clientX - dragOffset.x));
+      const y = Math.max(0, Math.min(window.innerHeight - 80, e.clientY - dragOffset.y));
+      activeDrag.style.left = `${x}px`;
+      activeDrag.style.top = `${y}px`;
+    }
+
+    function onDragEnd() {
+      activeDrag = null;
+      document.removeEventListener('mousemove', onDragMove);
+      document.removeEventListener('mouseup', onDragEnd);
+    }
+
+    function syncTaskbar() {
+      const row = document.getElementById('taskbarTasksRow');
+      row.innerHTML = '';
+      const windows = document.querySelectorAll('.window');
+      windows.forEach(w => {
+        if (w.style.display !== 'none') {
+          const btn = document.createElement('div');
+          btn.className = 'taskbar-item-btn' + (w.classList.contains('active-window') && !w.classList.contains('minimized') ? ' active' : '');
+          const title = w.querySelector('.titlebar-left span:last-child').textContent;
+          btn.textContent = title;
+          btn.onclick = () => {
+            if (w.classList.contains('minimized')) {
+              w.classList.remove('minimized');
+              bringToFront(w);
+            } else if (w.classList.contains('active-window')) {
+              minimizeWindow(w.id);
+            } else {
+              bringToFront(w);
+            }
+          };
+          row.appendChild(btn);
+        }
+      });
+    }
+
+    function toggleStartMenu() {
+      const menu = document.getElementById('startMenu');
+      const btn = document.getElementById('startBtn');
+      menu.classList.toggle('open');
+      btn.classList.toggle('active');
+    }
+
+    // -------------------------------------------------------------------------
+    // Wi-Fi Connection Manager (Real Device Network)
+    // -------------------------------------------------------------------------
+    const wifiNetworks = [
+      { ssid: 'MOJO-JAN-B-F5', bssid: '3C:52:A1:05:AE:DA', signal: '100%', dbm: '-61 dBm', chan: 'Channel 1 (2.4 GHz)', rate: '270 Mbps', sec: 'WPA2' },
+      { ssid: 'MOJO-JAN-B-F6', bssid: '50:91:E3:75:7C:02', signal: '100%', dbm: '-37 dBm', chan: 'Channel 1 (2.4 GHz)', rate: '300 Mbps', sec: 'WPA2' },
+      { ssid: 'MOJO-JAN-B-F7', bssid: '3C:52:A1:05:B2:7A', signal: '100%', dbm: '-54 dBm', chan: 'Channel 9 (2.4 GHz)', rate: '270 Mbps', sec: 'WPA2' },
+      { ssid: 'A703-Mojo',    bssid: '3C:52:A1:05:B5:5A', signal: '100%', dbm: '-52 dBm', chan: 'Channel 1 (2.4 GHz)', rate: '300 Mbps', sec: 'WPA2' },
+      { ssid: 'Airtel_rjam_8146', bssid: '40:48:6E:70:3B:0A', signal: '80%', dbm: '-58 dBm', chan: 'Channel 11 (2.4 GHz)', rate: '144 Mbps', sec: 'WPA2' },
+      { ssid: 'A-303',        bssid: '50:91:E3:75:86:5A', signal: '55%', dbm: '-75 dBm', chan: 'Channel 2 (2.4 GHz)', rate: '54 Mbps', sec: 'WPA2' }
+    ];
+
+    let activeWifiSSID = 'MOJO-JAN-B-F5';
+    let isWifiOnline = true;
+
+    function renderWifiUI() {
+      const listEl = document.getElementById('wifiNetworkList');
+      if (listEl) {
+        listEl.innerHTML = '';
+        wifiNetworks.forEach(net => {
+          const isCurrent = isWifiOnline && (net.ssid === activeWifiSSID);
+          const card = document.createElement('div');
+          card.className = 'wifi-network-card' + (isCurrent ? ' connected' : '');
+          card.innerHTML = `
+            <div>
+              <div class="wifi-ssid-title">
+                <span>📶 ${net.ssid}</span>
+                ${isCurrent ? '<span class="wifi-badge-connected">CONNECTED</span>' : '🔒'}
+              </div>
+              <div style="font-size: 11px; color: ${isCurrent ? '#8be9fd' : '#aaa'}; margin-top: 3px;">
+                ${isCurrent ? 'Connected, secured' : 'Secured (' + net.sec + ')'} • Signal: ${net.signal} (${net.dbm}) • ${net.chan}
+              </div>
+              ${isCurrent ? `<div style="font-size: 11px; color: #888;">IP: 192.168.1.145 • Gateway: 192.168.1.1 • BSSID: ${net.bssid}</div>` : ''}
+            </div>
+            <div>
+              ${isCurrent
+                ? `<button class="wifi-disconnect-btn" onclick="disconnectWifi()">Disconnect</button>`
+                : `<button class="wifi-disconnect-btn" style="background: #0e8420;" onclick="connectWifi('${net.ssid}')">Connect</button>`
+              }
+            </div>
+          `;
+          listEl.appendChild(card);
+        });
+      }
+
+      // Update Tray
+      const traySpan = document.getElementById('trayWifiSsid');
+      if (traySpan) {
+        if (isWifiOnline) {
+          traySpan.textContent = activeWifiSSID;
+          traySpan.style.color = '#008000';
+        } else {
+          traySpan.textContent = 'Disconnected';
+          traySpan.style.color = '#ff0000';
+        }
+      }
+
+      // Update Desktop Shortcut Label
+      const deskLabel = document.getElementById('desktopWifiLabel');
+      if (deskLabel) {
+        deskLabel.textContent = isWifiOnline ? `Wi-Fi (${activeWifiSSID})` : 'Wi-Fi (Offline)';
+      }
+
+      // Update Start Menu Item
+      const startWifi = document.getElementById('startWifiItem');
+      if (startWifi) {
+        startWifi.textContent = isWifiOnline ? `📶 Wi-Fi (${activeWifiSSID})` : '📶 Wi-Fi (Offline)';
+      }
+
+      // Update Terminal Banner
+      const termBanner = document.getElementById('termWifiBanner');
+      if (termBanner) {
+        termBanner.textContent = isWifiOnline
+          ? `MicroOS v5.2 (x86_64 Long Mode) — Connected: ${activeWifiSSID}`
+          : `MicroOS v5.2 (x86_64 Long Mode) — Wi-Fi Disconnected`;
+      }
+    }
+
+    function connectWifi(ssid) {
+      activeWifiSSID = ssid;
+      isWifiOnline = true;
+      renderWifiUI();
+      appendTermOutput(`[NET] Authenticating with ${ssid} via WPA2-Personal CCMP...`);
+      setTimeout(() => {
+        appendTermOutput(`[NET] Associated with ${ssid}. DHCP lease obtained: 192.168.1.145/24.`);
+      }, 300);
+    }
+
+    function disconnectWifi() {
+      const prev = activeWifiSSID;
+      isWifiOnline = false;
+      renderWifiUI();
+      appendTermOutput(`[NET] Wi-Fi Interface wlan0 disassociated from ${prev}. Radio entering idle state.`);
+    }
+
+    function refreshWifiScan() {
+      appendTermOutput(`[NET] Scanning wireless channels 1-14 (Realtek 8822CE)... Found ${wifiNetworks.length} networks.`);
+      renderWifiUI();
+    }
+
+    // Initialize Wi-Fi UI after all declarations
+    renderWifiUI();
+
+    // -------------------------------------------------------------------------
+    // Snap Store Engine (Package Installation & Filter)
+    // -------------------------------------------------------------------------
+    function filterSnapApps(query) {
+      const q = query.toLowerCase();
+      document.querySelectorAll('.snap-app-card').forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(q) ? 'flex' : 'none';
+      });
+    }
+
+    function switchSnapTab(tab, btn) {
+      document.querySelectorAll('.snap-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.snap-app-card').forEach(card => {
+        if (tab === 'installed') {
+          card.style.display = card.dataset.installed === 'true' ? 'flex' : 'none';
+        } else if (tab === 'updates') {
+          card.style.display = 'none';
+        } else {
+          card.style.display = 'flex';
+        }
+      });
+    }
+
+    function installSnapApp(cardId, winId, btnId) {
+      const btn = document.getElementById(btnId);
+      btn.textContent = 'Installing...';
+      btn.style.background = '#e95420';
+      appendTermOutput('[SNAP] Download snap "pixel-paint" from channel "stable"...');
+      setTimeout(() => {
+        appendTermOutput('[SNAP] Mount snap "pixel-paint" (setup sandbox security profiles)...');
+      }, 500);
+      setTimeout(() => {
+        btn.textContent = 'Open';
+        btn.className = 'snap-install-btn open';
+        btn.onclick = () => alert('Pixel Paint installed successfully!');
+        document.getElementById(cardId).dataset.installed = 'true';
+        appendTermOutput('[SNAP] "pixel-paint" installed successfully. Added to Start Menu.');
+      }, 1200);
+    }
+
+    // -------------------------------------------------------------------------
+    // Developer Terminal Engine
+    // -------------------------------------------------------------------------
+    const termInput = document.getElementById('termInput');
+    const termHistory = document.getElementById('termHistory');
+    const termBody = document.getElementById('termBody');
+
+    function focusTermInput() { termInput.focus(); }
+
+    function handleTermEnter(e) {
+      if (e) e.preventDefault();
+      const cmd = termInput.value.trim();
+      if (cmd) {
+        executeCommand(cmd);
+      } else {
+        appendTermOutput('', true);
+      }
+      termInput.value = '';
+      termBody.scrollTop = termBody.scrollHeight;
+    }
+
+    termInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        handleTermEnter(e);
+      }
+    });
+
+    function appendTermOutput(text, isCommand = false) {
+      const line = document.createElement('div');
+      line.className = 'term-line';
+      if (isCommand) {
+        line.innerHTML = `<span class="term-prompt">yeshwanth@microos:~$</span> ${text}`;
+      } else {
+        line.style.color = '#8be9fd';
+        line.innerHTML = text.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;');
+      }
+      termHistory.appendChild(line);
+      termBody.scrollTop = termBody.scrollHeight;
+    }
+
+    function executeCommand(rawCmd) {
+      appendTermOutput(rawCmd, true);
+      const trimmed = rawCmd.trim();
+      if (!trimmed) return;
+
+      const lower = trimmed.toLowerCase();
+      const parts = trimmed.split(/\s+/);
+      const cmd = parts[0].toLowerCase();
+      const args = parts.slice(1);
+      const subCmd = args.join(' ').toLowerCase();
+
+      // 1. Multi-word: who am i / whoami / who
+      if (lower === 'who am i' || lower === 'whoami') {
+        appendTermOutput("yeshwanth");
+        return;
+      }
+      if (lower === 'who') {
+        appendTermOutput("yeshwanth    tty1         Nov 24 20:01 (:0)");
+        return;
+      }
+
+      // 2. User profile: user / users / id / groups / yeshwanth / yashwanth
+      if (cmd === 'user' || cmd === 'users' || cmd === 'id' || cmd === 'groups' || cmd === 'yeshwanth' || cmd === 'yashwanth') {
+        appendTermOutput(
+          "Active User: yeshwanth\n" +
+          "  UID:        1000(yeshwanth)\n" +
+          "  GID:        1000(yeshwanth)\n" +
+          "  Groups:     1000(yeshwanth), 4(adm), 24(cdrom), 27(sudo), 998(netdev)\n" +
+          "  Home:       /home/yeshwanth\n" +
+          "  Shell:      /bin/sh\n" +
+          "  Privilege:  Full Root / Sudo Administrator\n" +
+          "  Status:     Logged in via local graphical console (tty1)"
+        );
+        return;
+      }
+
+      // 3. Context-sensitive Help: help / help <topic>
+      if (cmd === 'help') {
+        if (!subCmd) {
+          appendTermOutput(
+            "MicroOS v5.2 Builtin Shell Commands:\n" +
+            "  who am i / whoami   Display active login user and identity\n" +
+            "  user / id           Display user account details and permissions\n" +
+            "  wifi / iwconfig     Show connected Wi-Fi (Realtek 8822CE) & signal\n" +
+            "  help <cmd>          Get detailed help on a specific command (e.g. help wifi)\n" +
+            "  snap / snap list    Package manager for apps and tools\n" +
+            "  sched / scheduler   Run Dynamic Quantum Round Robin Scheduler\n" +
+            "  tasks / ps / top    List active kernel tasks and CPU bursts\n" +
+            "  mem / free          Display 128 KiB bump allocator heap statistics\n" +
+            "  hw / lshw           Show CPU Long Mode, PIT 8254 Timer, PIC 8259\n" +
+            "  calc [expr]         Launch calculator or evaluate math inline\n" +
+            "  theme               Cycle visual theme (Retro 98 / Modern / Ubuntu)\n" +
+            "  ls / pwd / cd       Navigate filesystem directories\n" +
+            "  cat / echo          Display or echo file contents\n" +
+            "  ping <host>         Simulate network latency test\n" +
+            "  snake / tetris      Launch retro arcade games (2048, pong, minesweeper)\n" +
+            "  clear               Clear terminal window\n" +
+            "  reboot / shutdown   Power control"
+          );
+          return;
+        }
+
+        if (subCmd.startsWith('wifi') || subCmd.startsWith('iwconfig') || subCmd.startsWith('ifconfig') || subCmd.startsWith('net')) {
+          appendTermOutput(
+            "wifi - Wireless Network Interface Controller\n" +
+            "Connected Device: Realtek 8822CE Wireless LAN 802.11ac PCI-E NIC\n" +
+            `Connected SSID:   ${activeWifiSSID} (Signal: 100%)\n\n` +
+            "Usage:\n" +
+            "  wifi                Display current connection status and IP\n" +
+            "  wifi scan           Scan and list all visible nearby networks\n" +
+            "  wifi connect <SSID> Connect to specified wireless SSID\n" +
+            "  wifi disconnect     Disconnect wireless interface wlan0\n" +
+            "  wifi gui            Open the graphical Wi-Fi configuration window"
+          );
+          return;
+        }
+
+        if (subCmd.startsWith('user') || subCmd.startsWith('who') || subCmd.startsWith('id')) {
+          appendTermOutput(
+            "user / whoami - Identity and Session Management\n" +
+            "Usage:\n" +
+            "  who am i            Print session login entry\n" +
+            "  whoami              Print effective user name\n" +
+            "  user                Print detailed user profile, UID, GID, and groups"
+          );
+          return;
+        }
+
+        if (subCmd.startsWith('snap') || subCmd.startsWith('store') || subCmd.startsWith('pkg')) {
+          appendTermOutput(
+            "snap - Package Management Hub for MicroOS\n" +
+            "Usage:\n" +
+            "  snap list           List all installed application packages\n" +
+            "  snap install <pkg>  Install a package (e.g. snap install pixel-paint)\n" +
+            "  snap remove <pkg>   Remove an installed package\n" +
+            "  snap gui            Open graphical Snap Store window"
+          );
+          return;
+        }
+
+        if (subCmd.startsWith('sched')) {
+          appendTermOutput(
+            "sched - Dynamic Quantum Round Robin Scheduler Engine\n" +
+            "Usage:\n" +
+            "  sched               Run hardware timer-driven round robin simulation\n" +
+            "  sched --detail      Display per-task waiting, turnaround, and response times"
+          );
+          return;
+        }
+
+        appendTermOutput(`Help topic '${subCmd}': available in MicroOS v5.2.`);
+        return;
+      }
+
+      // 4. Wi-Fi & Network Commands
+      if (cmd === 'wifi' || cmd === 'iwconfig' || cmd === 'ifconfig' || (cmd === 'ip' && (args[0] === 'a' || args[0] === 'addr'))) {
+        if (args[0] === 'scan') {
+          let out = "Scanning for wireless networks on wlan0 (Realtek 8822CE)...\nAvailable Networks (" + wifiNetworks.length + " found):\n";
+          wifiNetworks.forEach(n => {
+            const star = (isWifiOnline && n.ssid === activeWifiSSID) ? "* " : "  ";
+            const stat = (isWifiOnline && n.ssid === activeWifiSSID) ? "[Connected]" : "[Secured]  ";
+            out += `${star}${n.ssid.padEnd(18)} ${stat}  ${n.signal} (${n.dbm})  ${n.sec}  ${n.chan}\n`;
+          });
+          appendTermOutput(out.trim());
+          return;
+        }
+        if (args[0] === 'gui') {
+          openWindow('winWifi');
+          appendTermOutput("[NET] Opened graphical Wi-Fi configuration window.");
+          return;
+        }
+        if (args[0] === 'disconnect') {
+          disconnectWifi();
+          return;
+        }
+        if (args[0] === 'connect') {
+          const target = args[1] || 'MOJO-JAN-B-F5';
+          connectWifi(target);
+          return;
+        }
+        if (!isWifiOnline) {
+          appendTermOutput(
+            "wlan0: Realtek 8822CE Wireless LAN 802.11ac PCI-E NIC\n" +
+            "  Radio Status:   Disconnected / Radio Idle\n" +
+            "  Hardware MAC:   00:45:e2:ad:9e:cc\n" +
+            "  Interface:      wlan0 (Down)\n" +
+            "  Run 'wifi scan' or 'wifi connect <SSID>' to associate."
+          );
+          return;
+        }
+        const net = wifiNetworks.find(n => n.ssid === activeWifiSSID) || wifiNetworks[0];
+        appendTermOutput(
+          "wlan0: Realtek 8822CE Wireless LAN 802.11ac PCI-E NIC\n" +
+          `  Connected SSID: ${activeWifiSSID}\n` +
+          `  Signal Quality: ${net.signal} (${net.dbm}) [Excellent]\n` +
+          `  Access Point:   ${net.bssid}\n` +
+          `  Radio Mode:     802.11n (${net.chan})\n` +
+          `  Bit Rate:       ${net.rate}\n` +
+          "  IP Address:     192.168.1.145 / 24\n" +
+          "  Gateway:        192.168.1.1\n" +
+          "  Status:         Active & Connected"
+        );
+        return;
+      }
+
+      // 5. Snap Store Commands
+      if (cmd === 'snap') {
+        if (args[0] === 'gui' || args[0] === 'store') {
+          openWindow('winSnapStore');
+          appendTermOutput("[SNAP] Opened graphical Snap Store.");
+          return;
+        }
+        if (args[0] === 'install') {
+          const pkg = args[1] || 'pixel-paint';
+          appendTermOutput(`[SNAP] Fetching package metadata for '${pkg}'...\n[SNAP] Mounting squashfs sandbox for '${pkg}'...\n[SNAP] Success: '${pkg}' installed into /snap/bin/${pkg}`);
+          return;
+        }
+        appendTermOutput(
+          "Name               Version     Rev    Tracking       Publisher   Notes\n" +
+          "terminal           v5.2.0      102    latest/stable  canonical✓  classic\n" +
+          "wifi-manager       v2.4.1      45     latest/stable  micro-team  -\n" +
+          "snake-arcade       v1.2.0      18     latest/stable  retro-games -\n" +
+          "tetris-classic     v2.0.1      24     latest/stable  retro-games -\n" +
+          "2048-puzzle        v1.0.4      12     latest/stable  gabriele    -\n" +
+          "minesweeper        v3.2.0      8      latest/stable  microsoft   -\n" +
+          "calculator         v1.5.0      3      latest/stable  canonical✓  -"
+        );
+        return;
+      }
+
+      // 6. Scheduler
+      if (cmd === 'sched' || cmd === 'scheduler') {
+        appendTermOutput(
+          "=== Intel 8254 PIT (100 Hz IRQ0) Dynamic Quantum Scheduler ===\n" +
+          "[SCHED] SWITCH: INIT -> Task-1-CPUBound | Reason: InitialSchedule | DQ: 9 ticks\n" +
+          "[SCHED] SWITCH: Task-1-CPUBound -> Task-2-Interactive | Reason: QuantumExpired | DQ: 9 ticks\n" +
+          "[TASK ] Task 2 voluntarily yields CPU to simulate I/O burst completion\n" +
+          "[SCHED] SWITCH: Task-2-Interactive -> Task-3-SyncWorker | Reason: TaskYielded | DQ: 14 ticks\n" +
+          "[SCHED] SWITCH: Task-3-SyncWorker -> Task-4-Diagnostics | Reason: TaskTerminated | DQ: 7 ticks\n" +
+          "[SCHED] SWITCH: Task-4-Diagnostics -> Task-1-CPUBound | Reason: TaskTerminated | DQ: 16 ticks\n" +
+          "[SCHED] SWITCH: Task-1-CPUBound -> Task-2-Interactive | Reason: TaskTerminated | DQ: 12 ticks\n" +
+          "[SCHED] All 4 tasks completed! Total Context Switches: 6 | Avg Waiting: 25 ticks"
+        );
+        return;
+      }
+
+      // 7. Process / Task info
+      if (cmd === 'ps' || cmd === 'tasks' || cmd === 'top' || cmd === 'htop') {
+        appendTermOutput(
+          "PID  USER       PRIO  BURST  STATUS      COMMAND\n" +
+          "1    yeshwanth  5     18     TERMINATED  Task-1-CPUBound\n" +
+          "2    yeshwanth  5     10     TERMINATED  Task-2-Interactive\n" +
+          "3    yeshwanth  8     14     TERMINATED  Task-3-SyncWorker\n" +
+          "4    yeshwanth  3     6      TERMINATED  Task-4-Diagnostics\n" +
+          "Total Runnable: 0 | Workload Completion: 100%"
+        );
+        return;
+      }
+
+      // 8. Memory info
+      if (cmd === 'mem' || cmd === 'free') {
+        appendTermOutput(
+          "Kernel Bump Allocator Statistics (128 KiB Heap):\n" +
+          "  Total Memory:     131,072 Bytes (128 KiB)\n" +
+          "  Allocated Bytes:  64 Bytes\n" +
+          "  Free Heap Memory: 131,008 Bytes\n" +
+          "  Allocations:      1\n" +
+          "  SpinLock<T>:      Verified Protected Counter = 100"
+        );
+        return;
+      }
+
+      // 9. Hardware & System
+      if (cmd === 'hw' || cmd === 'lshw' || cmd === 'lscpu') {
+        appendTermOutput(
+          "CPU Architecture:  x86_64 Long Mode (64-bit)\n" +
+          "GDT:               Kernel Code (0x08), Kernel Data (0x10)\n" +
+          "IDT:               256 Vectors Initialized with 8259 PIC\n" +
+          "Hardware Timer:    Intel 8254 PIT @ 100 Hz (IRQ0)\n" +
+          "NIC:               Realtek 8822CE Wireless LAN 802.11ac"
+        );
+        return;
+      }
+
+      // 10. File system navigation
+      if (cmd === 'ls' || cmd === 'dir') {
+        appendTermOutput("bin  boot  etc  home  kernel.elf  limine.conf  src  traces");
+        return;
+      }
+      if (cmd === 'pwd') {
+        appendTermOutput("/home/yeshwanth");
+        return;
+      }
+      if (cmd === 'cd') {
+        appendTermOutput("/home/yeshwanth");
+        return;
+      }
+      if (cmd === 'cat') {
+        if (args[0] === 'limine.conf') {
+          appendTermOutput("TIMEOUT=3\nDEFAULT_ENTRY=1\nSERIAL=yes\nVERBOSE=yes\n\n:Yashwanth Micro-OS (Dynamic Quantum)\n    PROTOCOL=limine\n    KERNEL_PATH=boot:///boot/yashwanth_micro_os");
+        } else {
+          appendTermOutput("MicroOS v5.2 (x86_64 Long Mode) — Academic CA6 Kernel & Retro Desktop");
+        }
+        return;
+      }
+
+      // 11. Calculator & Inline math
+      if (cmd === 'calc') {
+        if (args.length > 0) {
+          try {
+            const expr = args.join(' ');
+            const res = eval(expr);
+            appendTermOutput(`${expr} = ${res}`);
+          } catch(e) {
+            appendTermOutput("Error evaluating expression.");
+          }
+          return;
+        }
+        openWindow('winCalc');
+        appendTermOutput("[APP] Opened Retro Calculator.");
+        return;
+      }
+
+      // 12. Ping test
+      if (cmd === 'ping') {
+        const host = args[0] || '192.168.1.1';
+        appendTermOutput(
+          `PING ${host} (56 bytes of data):\n` +
+          `64 bytes from ${host}: icmp_seq=1 ttl=64 time=0.42 ms\n` +
+          `64 bytes from ${host}: icmp_seq=2 ttl=64 time=0.38 ms\n` +
+          `64 bytes from ${host}: icmp_seq=3 ttl=64 time=0.41 ms\n` +
+          `--- ${host} ping statistics --- 3 packets transmitted, 3 received, 0% packet loss`
+        );
+        return;
+      }
+
+      // 13. System Utilities
+      if (cmd === 'clear' || cmd === 'cls') { termHistory.innerHTML = ''; return; }
+      if (cmd === 'theme') { cycleTheme(); return; }
+      if (cmd === 'date') { appendTermOutput(new Date().toString()); return; }
+      if (cmd === 'uptime') { appendTermOutput("up 4 hours, 28 minutes, 1 user, load average: 0.08, 0.03, 0.01"); return; }
+      if (cmd === 'uname') {
+        if (args.includes('-a')) {
+          appendTermOutput("Linux microos 5.2.0-generic #1 SMP PREEMPT x86_64 GNU/Linux (Bare-Metal Limine / Rust)");
+        } else {
+          appendTermOutput("MicroOS");
+        }
+        return;
+      }
+      if (cmd === 'echo') { appendTermOutput(args.join(' ')); return; }
+      if (cmd === 'reboot' || cmd === 'shutdown') {
+        appendTermOutput("[SYSTEM] MicroOS reboot sequence requested... System is healthy.");
+        return;
+      }
+
+      // 14. App Launchers
+      if (cmd === 'snake') { openWindow('winSnake'); return; }
+      if (cmd === 'tetris') { openWindow('winTetris'); return; }
+      if (cmd === '2048') { openWindow('win2048'); return; }
+      if (cmd === 'pong') { openWindow('winPong'); return; }
+      if (cmd === 'minesweeper') { openWindow('winMinesweeper'); return; }
+
+      appendTermOutput(`sh: ${cmd}: command not found. Type 'help' for available commands.`);
+    }
+
+    function runTermCommand(cmd) { executeCommand(cmd); }
+
+    // -------------------------------------------------------------------------
+    // RETRO CALCULATOR ENGINE
+    // -------------------------------------------------------------------------
+    let calcVal = '0', calcReset = false;
+    function calcInput(k) {
+      const disp = document.getElementById('calcDisplay');
+      if (k === 'C') { calcVal = '0'; }
+      else if (k === '=') {
+        try { calcVal = String(eval(calcVal)); } catch(e) { calcVal = 'Error'; }
+        calcReset = true;
+      } else {
+        if (calcVal === '0' || calcReset) { calcVal = k; calcReset = false; }
+        else { calcVal += k; }
+      }
+      disp.textContent = calcVal;
+    }
+
+    // -------------------------------------------------------------------------
+    // SNAKE GAME
+    // -------------------------------------------------------------------------
+    let snakeCtx, snakeTimer, snakeX, snakeY, snakeDx, snakeDy, snakeTrail, snakeTail, snakeFoodX, snakeFoodY, snakeScoreVal = 0, snakeHighVal = 0;
+    function initSnake() {
+      const canvas = document.getElementById('snakeCanvas');
+      snakeCtx = canvas.getContext('2d');
+      snakeX = 8; snakeY = 8;
+      snakeDx = 1; snakeDy = 0;
+      snakeTrail = []; snakeTail = 4;
+      snakeScoreVal = 0;
+      document.getElementById('snakeScore').textContent = '0';
+      spawnSnakeFood();
+      clearInterval(snakeTimer);
+      snakeTimer = setInterval(updateSnake, 90);
+    }
+    function spawnSnakeFood() {
+      snakeFoodX = Math.floor(Math.random() * 17);
+      snakeFoodY = Math.floor(Math.random() * 16);
+    }
+    function updateSnake() {
+      snakeX += snakeDx; snakeY += snakeDy;
+      if (snakeX < 0) snakeX = 16; if (snakeX > 16) snakeX = 0;
+      if (snakeY < 0) snakeY = 15; if (snakeY > 15) snakeY = 0;
+
+      snakeCtx.fillStyle = '#000000';
+      snakeCtx.fillRect(0, 0, 340, 320);
+
+      snakeCtx.fillStyle = '#ff0000';
+      snakeCtx.fillRect(snakeFoodX * 20 + 2, snakeFoodY * 20 + 2, 16, 16);
+
+      snakeCtx.fillStyle = '#00ff66';
+      for (let i = 0; i < snakeTrail.length; i++) {
+        snakeCtx.fillRect(snakeTrail[i].x * 20 + 1, snakeTrail[i].y * 20 + 1, 18, 18);
+        if (snakeTrail[i].x === snakeX && snakeTrail[i].y === snakeY && snakeTail > 4) {
+          snakeTail = 4;
+          snakeScoreVal = 0;
+          document.getElementById('snakeScore').textContent = '0';
+        }
+      }
+      snakeTrail.push({ x: snakeX, y: snakeY });
+      while (snakeTrail.length > snakeTail) snakeTrail.shift();
+
+      if (snakeFoodX === snakeX && snakeFoodY === snakeY) {
+        snakeTail++;
+        snakeScoreVal += 10;
+        document.getElementById('snakeScore').textContent = snakeScoreVal;
+        if (snakeScoreVal > snakeHighVal) {
+          snakeHighVal = snakeScoreVal;
+          document.getElementById('snakeHigh').textContent = snakeHighVal;
+        }
+        spawnSnakeFood();
+      }
+    }
+    window.addEventListener('keydown', (e) => {
+      if (document.getElementById('winSnake').style.display !== 'none') {
+        if (e.key === 'ArrowLeft' || e.key === 'a') if (snakeDx !== 1) { snakeDx = -1; snakeDy = 0; }
+        if (e.key === 'ArrowUp' || e.key === 'w') if (snakeDy !== 1) { snakeDx = 0; snakeDy = -1; }
+        if (e.key === 'ArrowRight' || e.key === 'd') if (snakeDx !== -1) { snakeDx = 1; snakeDy = 0; }
+        if (e.key === 'ArrowDown' || e.key === 's') if (snakeDy !== -1) { snakeDx = 0; snakeDy = 1; }
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // TETRIS CLASSIC
+    // -------------------------------------------------------------------------
+    let tetrisCanvas, tetrisCtx, tetrisBoard, tetrisPiece, tetrisTimer, tetrisScoreVal = 0, tetrisLinesVal = 0;
+    const SHAPES = [
+      [[1, 1, 1, 1]], [[1, 1], [1, 1]], [[0, 1, 0], [1, 1, 1]],
+      [[1, 0, 0], [1, 1, 1]], [[0, 0, 1], [1, 1, 1]], [[0, 1, 1], [1, 1, 0]], [[1, 1, 0], [0, 1, 1]]
+    ];
+    const COLORS = ['#00e5ff', '#ffff00', '#ff00ff', '#ff9100', '#0000ff', '#00ff66', '#ff0000'];
+
+    function initTetris() {
+      tetrisCanvas = document.getElementById('tetrisCanvas');
+      tetrisCtx = tetrisCanvas.getContext('2d');
+      tetrisBoard = Array(18).fill().map(() => Array(10).fill(0));
+      tetrisScoreVal = 0; tetrisLinesVal = 0;
+      document.getElementById('tetrisScore').textContent = '0';
+      document.getElementById('tetrisLines').textContent = '0';
+      spawnTetrisPiece();
+      clearInterval(tetrisTimer);
+      tetrisTimer = setInterval(updateTetris, 450);
+    }
+    function spawnTetrisPiece() {
+      const idx = Math.floor(Math.random() * SHAPES.length);
+      tetrisPiece = { matrix: SHAPES[idx], color: COLORS[idx], x: 4, y: 0 };
+      if (checkCollision(tetrisPiece)) tetrisBoard = Array(18).fill().map(() => Array(10).fill(0));
+    }
+    function checkCollision(piece) {
+      for (let r = 0; r < piece.matrix.length; r++) {
+        for (let c = 0; c < piece.matrix[r].length; c++) {
+          if (piece.matrix[r][c]) {
+            const x = piece.x + c; const y = piece.y + r;
+            if (x < 0 || x >= 10 || y >= 18 || (y >= 0 && tetrisBoard[y][x])) return true;
+          }
+        }
+      }
+      return false;
+    }
+    function rotateMatrix(mat) { return mat[0].map((_, i) => mat.map(row => row[i]).reverse()); }
+    function updateTetris() {
+      tetrisPiece.y++;
+      if (checkCollision(tetrisPiece)) {
+        tetrisPiece.y--;
+        mergePiece();
+        clearLines();
+        spawnTetrisPiece();
+      }
+      drawTetris();
+    }
+    function mergePiece() {
+      for (let r = 0; r < tetrisPiece.matrix.length; r++) {
+        for (let c = 0; c < tetrisPiece.matrix[r].length; c++) {
+          if (tetrisPiece.matrix[r][c] && tetrisPiece.y + r >= 0) {
+            tetrisBoard[tetrisPiece.y + r][tetrisPiece.x + c] = tetrisPiece.color;
+          }
+        }
+      }
+    }
+    function clearLines() {
+      let lines = 0;
+      for (let r = 17; r >= 0; r--) {
+        if (tetrisBoard[r].every(c => c !== 0)) {
+          tetrisBoard.splice(r, 1);
+          tetrisBoard.unshift(Array(10).fill(0));
+          lines++; r++;
+        }
+      }
+      if (lines > 0) {
+        tetrisLinesVal += lines;
+        tetrisScoreVal += lines * 100 * lines;
+        document.getElementById('tetrisScore').textContent = tetrisScoreVal;
+        document.getElementById('tetrisLines').textContent = tetrisLinesVal;
+      }
+    }
+    function drawTetris() {
+      tetrisCtx.fillStyle = '#000000';
+      tetrisCtx.fillRect(0, 0, 240, 360);
+      for (let r = 0; r < 18; r++) {
+        for (let c = 0; c < 10; c++) {
+          if (tetrisBoard[r][c]) {
+            tetrisCtx.fillStyle = tetrisBoard[r][c];
+            tetrisCtx.fillRect(c * 24 + 1, r * 20 + 1, 22, 18);
+          }
+        }
+      }
+      if (tetrisPiece) {
+        tetrisCtx.fillStyle = tetrisPiece.color;
+        for (let r = 0; r < tetrisPiece.matrix.length; r++) {
+          for (let c = 0; c < tetrisPiece.matrix[r].length; c++) {
+            if (tetrisPiece.matrix[r][c]) {
+              tetrisCtx.fillRect((tetrisPiece.x + c) * 24 + 1, (tetrisPiece.y + r) * 20 + 1, 22, 18);
+            }
+          }
+        }
+      }
+    }
+    window.addEventListener('keydown', (e) => {
+      if (document.getElementById('winTetris').style.display !== 'none' && tetrisPiece) {
+        if (e.key === 'ArrowLeft') { tetrisPiece.x--; if (checkCollision(tetrisPiece)) tetrisPiece.x++; drawTetris(); }
+        else if (e.key === 'ArrowRight') { tetrisPiece.x++; if (checkCollision(tetrisPiece)) tetrisPiece.x--; drawTetris(); }
+        else if (e.key === 'ArrowUp') {
+          const rot = rotateMatrix(tetrisPiece.matrix);
+          const orig = tetrisPiece.matrix;
+          tetrisPiece.matrix = rot;
+          if (checkCollision(tetrisPiece)) tetrisPiece.matrix = orig;
+          drawTetris();
+        } else if (e.key === 'ArrowDown') { updateTetris(); }
+        else if (e.key === ' ') {
+          while (!checkCollision(tetrisPiece)) tetrisPiece.y++;
+          tetrisPiece.y--; mergePiece(); clearLines(); spawnTetrisPiece(); drawTetris();
+        }
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // 2048 PUZZLE
+    // -------------------------------------------------------------------------
+    let board2048 = [], score2048Val = 0;
+    function init2048() {
+      board2048 = Array(4).fill().map(() => Array(4).fill(0));
+      score2048Val = 0;
+      document.getElementById('score2048').textContent = '0';
+      spawnTile2048(); spawnTile2048(); render2048();
+    }
+    function spawnTile2048() {
+      let empty = [];
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (board2048[r][c] === 0) empty.push({r, c});
+      if (empty.length > 0) {
+        const cell = empty[Math.floor(Math.random() * empty.length)];
+        board2048[cell.r][cell.c] = Math.random() < 0.9 ? 2 : 4;
+      }
+    }
+    function render2048() {
+      const container = document.getElementById('grid2048');
+      container.innerHTML = '';
+      const colors = { 2: '#4a148c', 4: '#6a1b9a', 8: '#ff6f00', 16: '#ff8f00', 32: '#e65100', 64: '#d84315', 128: '#c2185b', 256: '#00b0ff', 512: '#00e676', 1024: '#ff1744', 2048: '#ffd600' };
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          const div = document.createElement('div');
+          div.style.width = '60px'; div.style.height = '60px';
+          div.style.background = '#444'; div.style.borderRadius = '4px';
+          div.style.display = 'flex'; div.style.alignItems = 'center'; div.style.justifyContent = 'center';
+          div.style.fontWeight = 'bold'; div.style.color = '#fff'; div.style.fontSize = '18px';
+          const val = board2048[r][c];
+          if (val > 0) { div.textContent = val; div.style.background = colors[val] || '#ff007f'; }
+          container.appendChild(div);
+        }
+      }
+    }
+    function slideRow(row) {
+      let arr = row.filter(v => v !== 0);
+      for (let i = 0; i < arr.length - 1; i++) {
+        if (arr[i] === arr[i + 1]) { arr[i] *= 2; score2048Val += arr[i]; arr.splice(i + 1, 1); }
+      }
+      while (arr.length < 4) arr.push(0);
+      return arr;
+    }
+    function move2048(dir) {
+      let newBoard = Array(4).fill().map(() => Array(4).fill(0));
+      if (dir === 'left') { for (let r = 0; r < 4; r++) newBoard[r] = slideRow(board2048[r]); }
+      else if (dir === 'right') { for (let r = 0; r < 4; r++) newBoard[r] = slideRow(board2048[r].slice().reverse()).reverse(); }
+      else if (dir === 'up') {
+        for (let c = 0; c < 4; c++) {
+          let col = [board2048[0][c], board2048[1][c], board2048[2][c], board2048[3][c]];
+          let slid = slideRow(col);
+          for (let r = 0; r < 4; r++) newBoard[r][c] = slid[r];
+        }
+      } else if (dir === 'down') {
+        for (let c = 0; c < 4; c++) {
+          let col = [board2048[3][c], board2048[2][c], board2048[1][c], board2048[0][c]];
+          let slid = slideRow(col);
+          for (let r = 0; r < 4; r++) newBoard[3 - r][c] = slid[r];
+        }
+      }
+      if (JSON.stringify(newBoard) !== JSON.stringify(board2048)) {
+        board2048 = newBoard;
+        document.getElementById('score2048').textContent = score2048Val;
+        spawnTile2048(); render2048();
+      }
+    }
+    window.addEventListener('keydown', (e) => {
+      if (document.getElementById('win2048').style.display !== 'none') {
+        if (e.key === 'ArrowLeft') move2048('left');
+        if (e.key === 'ArrowRight') move2048('right');
+        if (e.key === 'ArrowUp') move2048('up');
+        if (e.key === 'ArrowDown') move2048('down');
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // MINESWEEPER
+    // -------------------------------------------------------------------------
+    let mineGrid = [], mineTimerVal = 0, mineInterval;
+    function initMinesweeper() {
+      clearInterval(mineInterval);
+      mineTimerVal = 0;
+      document.getElementById('mineTimeLcd').textContent = '000';
+      document.getElementById('mineCountLcd').textContent = '010';
+      document.getElementById('mineSmiley').textContent = '😊';
+      const container = document.getElementById('mineGrid');
+      container.innerHTML = '';
+      mineGrid = [];
+      for (let r = 0; r < 9; r++) {
+        mineGrid[r] = [];
+        for (let c = 0; c < 9; c++) mineGrid[r][c] = { mine: false, revealed: false, flagged: false, count: 0 };
+      }
+      let placed = 0;
+      while (placed < 10) {
+        let r = Math.floor(Math.random() * 9), c = Math.floor(Math.random() * 9);
+        if (!mineGrid[r][c].mine) { mineGrid[r][c].mine = true; placed++; }
+      }
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (!mineGrid[r][c].mine) {
+            let cnt = 0;
+            for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+              if (r + dr >= 0 && r + dr < 9 && c + dc >= 0 && c + dc < 9 && mineGrid[r + dr][c + dc].mine) cnt++;
+            }
+            mineGrid[r][c].count = cnt;
+          }
+        }
+      }
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          const cell = document.createElement('div');
+          cell.style.width = '26px'; cell.style.height = '26px';
+          cell.style.background = '#c0c0c0';
+          cell.style.borderTop = '2px solid #fff'; cell.style.borderLeft = '2px solid #fff';
+          cell.style.borderRight = '2px solid #808080'; cell.style.borderBottom = '2px solid #808080';
+          cell.style.display = 'flex'; cell.style.alignItems = 'center'; cell.style.justifyContent = 'center';
+          cell.style.fontSize = '12px'; cell.style.fontWeight = 'bold'; cell.style.cursor = 'pointer';
+          cell.dataset.r = r; cell.dataset.c = c;
+          cell.onmousedown = (e) => handleMineClick(e, r, c);
+          cell.oncontextmenu = (e) => e.preventDefault();
+          container.appendChild(cell);
+        }
+      }
+      mineInterval = setInterval(() => {
+        mineTimerVal++;
+        document.getElementById('mineTimeLcd').textContent = String(Math.min(999, mineTimerVal)).padStart(3, '0');
+      }, 1000);
+    }
+    function handleMineClick(e, r, c) {
+      const cell = mineGrid[r][c];
+      if (cell.revealed) return;
+      if (e.button === 2) {
+        cell.flagged = !cell.flagged;
+        updateMineUI(r, c);
+        return;
+      }
+      if (cell.flagged) return;
+      if (cell.mine) {
+        document.getElementById('mineSmiley').textContent = '💀';
+        clearInterval(mineInterval);
+        for (let i = 0; i < 9; i++) for (let j = 0; j < 9; j++) if (mineGrid[i][j].mine) { mineGrid[i][j].revealed = true; updateMineUI(i, j); }
+      } else {
+        revealMine(r, c);
+      }
+    }
+    function revealMine(r, c) {
+      if (r < 0 || r >= 9 || c < 0 || c >= 9) return;
+      const cell = mineGrid[r][c];
+      if (cell.revealed || cell.flagged || cell.mine) return;
+      cell.revealed = true;
+      updateMineUI(r, c);
+      if (cell.count === 0) {
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) revealMine(r + dr, c + dc);
+      }
+    }
+    function updateMineUI(r, c) {
+      const el = document.querySelector(`#mineGrid div[data-r="${r}"][data-c="${c}"]`);
+      if (!el) return;
+      const cell = mineGrid[r][c];
+      if (cell.flagged) { el.textContent = '🚩'; }
+      else if (cell.revealed) {
+        el.style.border = '1px solid #777';
+        el.style.background = '#e0e0e0';
+        if (cell.mine) { el.textContent = '💣'; el.style.background = '#f00'; }
+        else if (cell.count > 0) {
+          el.textContent = cell.count;
+          const colors = ['', '#0000ff', '#008000', '#ff0000', '#000080', '#800000', '#008080', '#000'];
+          el.style.color = colors[cell.count] || '#000';
+        } else { el.textContent = ''; }
+      } else { el.textContent = ''; }
+    }
+
+    // -------------------------------------------------------------------------
+    // PONG CLASSIC
+    // -------------------------------------------------------------------------
+    let pongCanvas, pongCtx, pongBallX, pongBallY, pongBallDx, pongBallDy, pongP1Y, pongP2Y, pongP1Score = 0, pongP2Score = 0, pongTimer;
+    function initPong() {
+      pongCanvas = document.getElementById('pongCanvas');
+      pongCtx = pongCanvas.getContext('2d');
+      pongBallX = 210; pongBallY = 130;
+      pongBallDx = 4; pongBallDy = 3;
+      pongP1Y = 90; pongP2Y = 90;
+      pongP1Score = 0; pongP2Score = 0;
+      document.getElementById('pongP1').textContent = '0';
+      document.getElementById('pongCPU').textContent = '0';
+      clearInterval(pongTimer);
+      pongTimer = setInterval(updatePong, 22);
+      pongCanvas.onmousemove = (e) => {
+        const rect = pongCanvas.getBoundingClientRect();
+        pongP1Y = e.clientY - rect.top - 30;
+      };
+    }
+    function updatePong() {
+      pongBallX += pongBallDx; pongBallY += pongBallDy;
+      if (pongBallY <= 4 || pongBallY >= 256) pongBallDy = -pongBallDy;
+      if (pongP2Y + 30 < pongBallY - 10) pongP2Y += 3.2;
+      else if (pongP2Y + 30 > pongBallY + 10) pongP2Y -= 3.2;
+
+      if (pongBallX <= 20 && pongBallX >= 10 && pongBallY >= pongP1Y && pongBallY <= pongP1Y + 60) pongBallDx = -pongBallDx * 1.05;
+      if (pongBallX >= 400 && pongBallX <= 410 && pongBallY >= pongP2Y && pongBallY <= pongP2Y + 60) pongBallDx = -pongBallDx * 1.05;
+
+      if (pongBallX < 0) { pongP2Score++; document.getElementById('pongCPU').textContent = pongP2Score; resetPong(); }
+      if (pongBallX > 420) { pongP1Score++; document.getElementById('pongP1').textContent = pongP1Score; resetPong(); }
+
+      pongCtx.fillStyle = '#000000';
+      pongCtx.fillRect(0, 0, 420, 260);
+
+      pongCtx.fillStyle = '#ffffff';
+      pongCtx.fillRect(10, Math.max(0, Math.min(200, pongP1Y)), 8, 60);
+      pongCtx.fillRect(402, Math.max(0, Math.min(200, pongP2Y)), 8, 60);
+
+      pongCtx.beginPath();
+      pongCtx.arc(pongBallX, pongBallY, 5, 0, Math.PI * 2);
+      pongCtx.fill();
+    }
+    function resetPong() {
+      pongBallX = 210; pongBallY = 130;
+      pongBallDx = (Math.random() < 0.5 ? 4 : -4);
+      pongBallDy = (Math.random() < 0.5 ? 3 : -3);
+    }
+  </script>
+</body>
+</html>

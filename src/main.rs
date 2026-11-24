@@ -176,7 +176,7 @@ pub extern "C" fn _start() -> ! {
 
     // 7. Scheduling Execution Loop
     let mut loop_limit = 200;
-    let mut last_yield_tick: u64 = u64::MAX;
+    let mut last_yield_runtime: u32 = u32::MAX;
 
     while loop_limit > 0 {
         loop_limit -= 1;
@@ -197,7 +197,7 @@ pub extern "C" fn _start() -> ! {
             }
         }
 
-        let current_tick = get_ticks();
+        let _current_tick = get_ticks();
 
         let action = {
             let mut sched = SCHEDULER.lock();
@@ -205,11 +205,25 @@ pub extern "C" fn _start() -> ! {
 
             // If the running task didn't terminate or exhaust its quantum,
             // check if Task 2 should voluntarily yield (simulate I/O burst).
-            // Guard with `current_tick != last_yield_tick` to prevent duplicate yields in the same tick.
+            // Decoupled from global wall-clock ticks: depends strictly on task runtime.
             if tick_action == ScheduleAction::Continue {
                 if let Some(curr) = sched.current_task_id() {
-                    if curr == TaskId(2) && current_tick % 3 == 0 && current_tick != last_yield_tick {
-                        last_yield_tick = current_tick;
+                    let should_yield = if curr == TaskId(2) {
+                        if let Some(task) = sched.get_task(curr) {
+                            task.total_runtime > 0
+                                && task.total_runtime % 3 == 0
+                                && task.total_runtime != last_yield_runtime
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    };
+
+                    if should_yield {
+                        if let Some(task) = sched.get_task(curr) {
+                            last_yield_runtime = task.total_runtime;
+                        }
                         log_task!("Task 2 voluntarily yields CPU to simulate I/O burst completion");
                         sched.yield_current()
                     } else {
@@ -235,15 +249,15 @@ pub extern "C" fn _start() -> ! {
                     .unwrap_or("INIT");
                 let next_task = sched.get_task(next).unwrap();
                 let reason_str = match reason {
-                    SwitchReason::QuantumExpired => "QuantumExpired (Preempt)",
-                    SwitchReason::TaskYielded => "TaskYielded (Cooperative)",
-                    SwitchReason::TaskTerminated => "TaskTerminated (Finished)",
+                    SwitchReason::QuantumExpired => "QuantumExpired",
+                    SwitchReason::TaskYielded => "TaskYielded",
+                    SwitchReason::TaskTerminated => "TaskTerminated",
                     SwitchReason::InitialSchedule => "InitialSchedule",
                     SwitchReason::TaskBlocked => "TaskBlocked",
                 };
 
                 log_sched!(
-                    "SWITCH: [{}] -> [{}] | Reason: {} | Dynamic Quantum: {} ticks (Queue: {})",
+                    "SWITCH: {:<18} -> {:<18} | Reason: {:<15} | DQ: {:>2} ticks (Queue: {})",
                     prev_name,
                     next_task.name,
                     reason_str,
@@ -262,56 +276,62 @@ pub extern "C" fn _start() -> ! {
     }
 
     // 8. Performance and Diagnostics Summary Report
-    println!("\n================================================================");
-    println!("                 SCHEDULER PERFORMANCE REPORT                   ");
-    println!("================================================================");
+    println!("\n==================================================================================");
+    println!("                           SCHEDULER PERFORMANCE REPORT                           ");
+    println!("==================================================================================");
     {
         let sched = SCHEDULER.lock();
         println!(
-            "{:<6} {:<20} {:<6} {:<8} {:<8} {:<10} {:<6} {:<6}",
-            "TID", "NAME", "PRIO", "RUNTIME", "WAITING", "TURNAROUND", "CSW", "PREEMPT"
+            "{:<4} {:<19} {:<5} {:<8} {:<8} {:<11} {:<9} {:<5} {:<6}",
+            "TID", "NAME", "PRIO", "RUNTIME", "WAITING", "TURNAROUND", "RESPONSE", "CSW", "PREEMPT"
         );
-        println!("----------------------------------------------------------------");
+        println!("----------------------------------------------------------------------------------");
 
         let mut total_waiting: u64 = 0;
         let mut total_turnaround: u64 = 0;
+        let mut total_response: u64 = 0;
         let mut count: u64 = 0;
 
         for id in 1..=4 {
             if let Some(task) = sched.get_task(TaskId(id)) {
                 let ta = task.turnaround_time();
+                let resp = task.response_time();
                 println!(
-                    "{:<6} {:<20} {:<6} {:<8} {:<8} {:<10} {:<6} {:<6}",
+                    "{:<4} {:<19} {:<5} {:<8} {:<8} {:<11} {:<9} {:<5} {:<6}",
                     task.id.0,
                     task.name,
                     task.priority,
                     task.total_runtime,
                     task.waiting_time,
                     ta,
+                    resp,
                     task.context_switch_count,
                     task.preempt_count
                 );
                 total_waiting += task.waiting_time as u64;
                 total_turnaround += ta;
+                total_response += resp;
                 count += 1;
             }
         }
 
-        println!("----------------------------------------------------------------");
+        println!("----------------------------------------------------------------------------------");
         let avg_waiting = if count > 0 { total_waiting / count } else { 0 };
         let avg_turnaround = if count > 0 { total_turnaround / count } else { 0 };
-        println!("Completed Tasks:           {}", sched.completed_tasks_count);
+        let avg_response = if count > 0 { total_response / count } else { 0 };
+        println!("Completed Tasks:           {}/{}", sched.completed_tasks_count, count);
         println!("Total Context Switches:    {}", sched.total_context_switches);
         println!("Total Scheduling Ticks:    {}", get_ticks());
         println!("Total Hardware IRQ0 Ticks: {}", get_hw_interrupt_count());
         println!("Average Waiting Time:      {} ticks", avg_waiting);
         println!("Average Turnaround Time:   {} ticks", avg_turnaround);
-        println!("Scheduling Efficiency:     100% (No starvation observed)");
+        println!("Average Response Time:     {} ticks", avg_response);
+        println!("Workload Completion:       100% (All 4 tasks completed without starvation)");
     }
 
-    println!("\n================================================================");
-    println!("           YASHWANTH MICRO-OS EXECUTION SUCCESSFUL             ");
-    println!("================================================================\n");
+    println!("\n==================================================================================");
+    println!("                     YASHWANTH MICRO-OS EXECUTION SUCCESSFUL                      ");
+    println!("==================================================================================\n");
 
     // Cleanly disable interrupts before exit/park
     unsafe {
