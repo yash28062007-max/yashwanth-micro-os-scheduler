@@ -34,14 +34,14 @@ class ExactNumberedCanvas(canvas.Canvas):
         
         # Header (pages 2 to total) - No horizontal line, matching reference screenshot exactly
         if self._pageNumber > 1:
-            self.drawString(54, 11 * inch - 36, "YASHWANTH MICRO-OS | YASHWANTH K")
+            self.drawString(54, 11 * inch - 36, "YASHWANTH MICRO-OS | YASHWANTH K (USN: 25BTRCL293)")
             self.drawRightString(8.5 * inch - 54, 11 * inch - 36, f"Page {self._pageNumber}")
 
         # Footer (all pages) - Thin rule with text below, matching reference screenshot exactly
         self.setStrokeColor(colors.HexColor("#CBD5E0"))
         self.setLineWidth(0.5)
         self.line(54, 45, 8.5 * inch - 54, 45)
-        self.drawString(54, 32, "YASHWANTH MICRO-OS | YASHWANTH K")
+        self.drawString(54, 32, "YASHWANTH MICRO-OS | YASHWANTH K (USN: 25BTRCL293)")
         self.drawRightString(8.5 * inch - 54, 32, f"Page {self._pageNumber}")
         self.restoreState()
 
@@ -122,33 +122,44 @@ def generate_pdf(output_path):
         'CoverPrep',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=10,
-        leading=14,
+        fontSize=9.5,
+        leading=13,
         textColor=colors.HexColor("#718096"),
         alignment=1,
-        spaceAfter=6
+        spaceAfter=4
     )
 
     name_style = ParagraphStyle(
         'CoverName',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=20,
-        leading=24,
+        fontSize=18,
+        leading=22,
         textColor=colors.HexColor("#0B2545"),
         alignment=1,
-        spaceAfter=18
+        spaceAfter=4
+    )
+
+    sub_info_style = ParagraphStyle(
+        'CoverSubInfo',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor("#2D3748"),
+        alignment=1,
+        spaceAfter=14
     )
 
     desc_style = ParagraphStyle(
         'CoverDesc',
         parent=styles['Normal'],
         fontName='Helvetica',
-        fontSize=10,
-        leading=15,
+        fontSize=9.5,
+        leading=14,
         textColor=colors.HexColor("#4A5568"),
         alignment=1,
-        spaceAfter=40
+        spaceAfter=24
     )
 
     meta_style = ParagraphStyle(
@@ -219,19 +230,27 @@ def generate_pdf(output_path):
     # =========================================================================
     # PAGE 1: COVER
     # =========================================================================
-    story.append(Spacer(1, 150))
+    story.append(Spacer(1, 100))
     story.append(Paragraph("YASHWANTH MICRO-OS", title_style))
     story.append(Paragraph("Source Code to Bootable ISO – Project Guide", subtitle_style))
     
-    story.append(Paragraph("Prepared for", prep_style))
+    story.append(Paragraph("Prepared by", prep_style))
     story.append(Paragraph("YASHWANTH K", name_style))
+    story.append(Paragraph("<b>USN:</b> 25BTRCL293 &nbsp;|&nbsp; <b>Branch:</b> CSE-AIML-E", sub_info_style))
+    
+    story.append(Spacer(1, 6))
+    story.append(Paragraph("Submitted to", prep_style))
+    story.append(Paragraph("SUJEET S JAGTAP", name_style))
+    story.append(Paragraph("Department of Computer Science and Engineering<br/>Faculty of Engineering and Technology, JAIN (Deemed-to-be University)", sub_info_style))
+    
     story.append(Paragraph("Repository links, build overview, ISO generation workflow, verification, and boot testing.", desc_style))
     
-    story.append(Spacer(1, 40))
+    story.append(Spacer(1, 16))
     meta_text = (
+        "<b>Course:</b> 25PCCS201 – Operating Systems &nbsp;|&nbsp; <b>Continuous Assessment:</b> CA-6<br/>"
         "<b>Project:</b> Yashwanth Micro-OS (x86_64 Dynamic Quantum Kernel)<br/>"
-        "<b>Source:</b> GitHub<br/>"
-        "<b>Published ISO:</b> Hugging Face"
+        "<b>Author:</b> Yashwanth K (USN: 25BTRCL293) &nbsp;|&nbsp; <b>Submitted to:</b> Sujeet S Jagtap<br/>"
+        "<b>Source:</b> GitHub &nbsp;|&nbsp; <b>Published ISO:</b> Hugging Face"
     )
     story.append(Paragraph(meta_text, meta_style))
     story.append(PageBreak())
@@ -457,7 +476,9 @@ def generate_pdf(output_path):
         "as a bootable ISO using Limine and xorriso. The final image should then be checked and tested in a virtual machine.",
         body_style
     ))
-    story.append(Paragraph("Project owner: <b>YASHWANTH K</b>", body_style))
+    story.append(Paragraph("<b>Project Owner:</b> YASHWANTH K &nbsp;(USN: <b>25BTRCL293</b> &nbsp;|&nbsp; Branch: CSE-AIML-E)", body_style))
+    story.append(Paragraph("<b>Submitted to:</b> SUJEET S JAGTAP &nbsp;(Department of CSE, FET, JAIN Deemed-to-be University)", body_style))
+    story.append(Paragraph("<b>Course Module:</b> 25PCCS201 – Operating Systems (Continuous Assessment 6)", body_style))
 
     story.append(Spacer(1, 6))
     story.append(Paragraph("Reference files checked", h2_blue))
