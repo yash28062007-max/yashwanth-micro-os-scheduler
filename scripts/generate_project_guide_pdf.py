@@ -197,7 +197,7 @@ def build_pdf(filename):
         [Paragraph("<b>Student Name:</b>", body_style), Paragraph("Yashwanth K (USN: 25BTRCL293) | Branch: CSE-AIML-E", body_style)],
         [Paragraph("<b>Course & Campus:</b>", body_style), Paragraph("25PCCS201 – Operating Systems | JAIN, FET Campus", body_style)],
         [Paragraph("<b>Source Code:</b>", body_style), Paragraph("<font color='#2B6CB0'><u>GitHub (yash28062007-max/yashwanth-micro-os-scheduler)</u></font>", body_style)],
-        [Paragraph("<b>Interactive Space:</b>", body_style), Paragraph("<font color='#2B6CB0'><u>Hugging Face (yash28062007-max/yashwanth-micro-os-scheduler)</u></font>", body_style)],
+        [Paragraph("<b>Interactive Space:</b>", body_style), Paragraph("<font color='#2B6CB0'><u>Hugging Face (Yashbot07/yashwanth-micro-os-scheduler)</u></font>", body_style)],
     ]
     t_cover = Table(cover_meta, colWidths=[130, 310])
     t_cover.setStyle(TableStyle([
@@ -222,7 +222,7 @@ def build_pdf(filename):
     story.append(Paragraph("<b>GitHub – Source code & Academic Reports:</b>", body_style))
     story.append(Paragraph('<a href="https://github.com/yash28062007-max/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://github.com/yash28062007-max/yashwanth-micro-os-scheduler</u></font></a>', link_style))
     story.append(Paragraph("<b>Hugging Face – Interactive Scheduler Simulator Space:</b>", body_style))
-    story.append(Paragraph('<a href="https://huggingface.co/spaces/yash28062007-max/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://huggingface.co/spaces/yash28062007-max/yashwanth-micro-os-scheduler</u></font></a>', link_style))
+    story.append(Paragraph('<a href="https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler</u></font></a>', link_style))
     story.append(Paragraph("The GitHub repository contains the full bare-metal Rust kernel, Limine bootloader configuration, automated test suites, academic continuous assessment reports (CA-2, CA-3, CA-5), and the companion desktop environment. The Hugging Face Space hosts an interactive Python/Gradio scheduler simulator.", body_style))
 
     story.append(Paragraph("2. What “Source Code to Bootable ISO” Means", h1_style))
@@ -347,7 +347,7 @@ def build_pdf(filename):
 
     story.append(Paragraph("11. Use the Published Space on Hugging Face", h1_style))
     story.append(Paragraph("The educational companion scheduler simulator is packaged in <code>hf_space/</code> and deployed to Hugging Face Spaces:", body_style))
-    story.append(Paragraph('<a href="https://huggingface.co/spaces/yash28062007-max/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://huggingface.co/spaces/yash28062007-max/yashwanth-micro-os-scheduler</u></font></a>', link_style))
+    story.append(Paragraph('<a href="https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler</u></font></a>', link_style))
     story.append(Paragraph("The Space allows users to configure task burst distributions, adjust dynamic quantum scaling parameters, and compare Gantt charts, waiting times, and fairness metrics interactively in their web browser.", body_style))
 
     story.append(Paragraph("12. Troubleshooting", h1_style))
@@ -403,7 +403,7 @@ def build_pdf(filename):
     story.append(Paragraph("GitHub Academic Reports Folder:", body_style))
     story.append(Paragraph('<a href="https://github.com/yash28062007-max/yashwanth-micro-os-scheduler/tree/main/reports"><font color="#2B6CB0"><u>https://github.com/yash28062007-max/yashwanth-micro-os-scheduler/tree/main/reports</u></font></a>', link_style))
     story.append(Paragraph("Hugging Face Interactive Simulator Space:", body_style))
-    story.append(Paragraph('<a href="https://huggingface.co/spaces/yash28062007-max/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://huggingface.co/spaces/yash28062007-max/yashwanth-micro-os-scheduler</u></font></a>', link_style))
+    story.append(Paragraph('<a href="https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler</u></font></a>', link_style))
 
     story.append(Spacer(1, 10))
     story.append(Paragraph("<i>Note: This guide is generated based on verified laboratory benchmarks, compiled ISO builds, and Git commits as of November 2026.</i>", ParagraphStyle('Note', parent=body_style, textColor=colors.HexColor("#718096"), fontSize=7.5)))
