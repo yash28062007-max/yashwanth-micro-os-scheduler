@@ -197,6 +197,7 @@ def build_pdf(filename):
         [Paragraph("<b>Student Name:</b>", body_style), Paragraph("Yashwanth K (USN: 25BTRCL293) | Branch: CSE-AIML-E", body_style)],
         [Paragraph("<b>Course & Campus:</b>", body_style), Paragraph("25PCCS201 – Operating Systems | JAIN, FET Campus", body_style)],
         [Paragraph("<b>Source Code:</b>", body_style), Paragraph("<font color='#2B6CB0'><u>GitHub (yash28062007-max/yashwanth-micro-os-scheduler)</u></font>", body_style)],
+        [Paragraph("<b>Published ISO:</b>", body_style), Paragraph("<font color='#2B6CB0'><u>Hugging Face (Yashbot07/yashwanth-microos-iso)</u></font>", body_style)],
         [Paragraph("<b>Interactive Space:</b>", body_style), Paragraph("<font color='#2B6CB0'><u>Hugging Face (Yashbot07/yashwanth-micro-os-scheduler)</u></font>", body_style)],
     ]
     t_cover = Table(cover_meta, colWidths=[130, 310])
@@ -218,12 +219,14 @@ def build_pdf(filename):
     # PAGE 2: PROJECT LINKS, OVERVIEW & REQUIREMENTS
     # =========================================================================
     story.append(Paragraph("1. Project Links", h1_style))
-    story.append(Paragraph("Use the following links to access the source code, reports, and interactive deployment:", body_style))
+    story.append(Paragraph("Use the following links to access the source code, reports, and already-published ISO image:", body_style))
     story.append(Paragraph("<b>GitHub – Source code & Academic Reports:</b>", body_style))
     story.append(Paragraph('<a href="https://github.com/yash28062007-max/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://github.com/yash28062007-max/yashwanth-micro-os-scheduler</u></font></a>', link_style))
+    story.append(Paragraph("<b>Hugging Face – Published Bootable ISO Repository:</b>", body_style))
+    story.append(Paragraph('<a href="https://huggingface.co/Yashbot07/yashwanth-microos-iso/tree/main"><font color="#2B6CB0"><u>https://huggingface.co/Yashbot07/yashwanth-microos-iso/tree/main</u></font></a>', link_style))
     story.append(Paragraph("<b>Hugging Face – Interactive Scheduler Simulator Space:</b>", body_style))
     story.append(Paragraph('<a href="https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler</u></font></a>', link_style))
-    story.append(Paragraph("The GitHub repository contains the full bare-metal Rust kernel, Limine bootloader configuration, automated test suites, academic continuous assessment reports (CA-2, CA-3, CA-5), and the companion desktop environment. The Hugging Face Space hosts an interactive Python/Gradio scheduler simulator.", body_style))
+    story.append(Paragraph("The Hugging Face repository lists the bootable <code>yashwanth_micro_os.iso</code> (~2.5 MB). The GitHub repository hosts the kernel source, Limine config, tests, and academic continuous assessment reports.", body_style))
 
     story.append(Paragraph("2. What “Source Code to Bootable ISO” Means", h1_style))
     story.append(Paragraph("The source repository contains the complete low-level code required to compile a bare-metal kernel and assemble a bootable ISO image. The build process compiles a Rust <code>no_std</code> kernel targeting <code>x86_64-unknown-none</code>, links it with a specialized linker script, arranges the Limine bootloader assets, and uses <code>xorriso</code> to assemble a hybrid ISO bootable on both legacy BIOS and modern UEFI hardware.", body_style))
@@ -345,10 +348,11 @@ def build_pdf(filename):
     story.append(Paragraph("• <b>Real Hardware Wi-Fi Controller:</b> Reads host network interface (Realtek 8822CE Wireless LAN 802.11ac) and displays connected status for <code>MOJO-JAN-B-F5</code> with dynamic network switching.", bullet_style))
     story.append(Paragraph("• <b>Snap Store & Games:</b> Ubuntu Snap software center plus 6 playable arcade games (Snake, Tetris, 2048, Minesweeper, Pong).", bullet_style))
 
-    story.append(Paragraph("11. Use the Published Space on Hugging Face", h1_style))
-    story.append(Paragraph("The educational companion scheduler simulator is packaged in <code>hf_space/</code> and deployed to Hugging Face Spaces:", body_style))
+    story.append(Paragraph("11. Use the Published ISO and Space on Hugging Face", h1_style))
+    story.append(Paragraph("If your goal is to test the already-built operating system without recompiling from source, download the pre-built ISO directly from Hugging Face:", body_style))
+    story.append(Paragraph('<a href="https://huggingface.co/Yashbot07/yashwanth-microos-iso/tree/main"><font color="#2B6CB0"><u>https://huggingface.co/Yashbot07/yashwanth-microos-iso/tree/main</u></font></a>', link_style))
+    story.append(Paragraph("You can also run the zero-install interactive scheduler simulator in your browser at:", body_style))
     story.append(Paragraph('<a href="https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler</u></font></a>', link_style))
-    story.append(Paragraph("The Space allows users to configure task burst distributions, adjust dynamic quantum scaling parameters, and compare Gantt charts, waiting times, and fairness metrics interactively in their web browser.", body_style))
 
     story.append(Paragraph("12. Troubleshooting", h1_style))
     story.append(Paragraph("• <b>VirtualBox VBoxSVC lock:</b> If the VM is locked with 0x80bb0007, terminate background <code>VBoxSVC.exe</code> and power on cleanly.", bullet_style))
@@ -398,12 +402,10 @@ def build_pdf(filename):
     story.append(Paragraph("• Simulator Package: <code>hf_space/app.py</code>, <code>hf_space/README.md</code>", bullet_style))
 
     story.append(Paragraph("15. Project Links", h1_style))
-    story.append(Paragraph("GitHub Source Code & Reports Repository:", body_style))
-    story.append(Paragraph('<a href="https://github.com/yash28062007-max/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://github.com/yash28062007-max/yashwanth-micro-os-scheduler</u></font></a>', link_style))
-    story.append(Paragraph("GitHub Academic Reports Folder:", body_style))
-    story.append(Paragraph('<a href="https://github.com/yash28062007-max/yashwanth-micro-os-scheduler/tree/main/reports"><font color="#2B6CB0"><u>https://github.com/yash28062007-max/yashwanth-micro-os-scheduler/tree/main/reports</u></font></a>', link_style))
-    story.append(Paragraph("Hugging Face Interactive Simulator Space:", body_style))
-    story.append(Paragraph('<a href="https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler</u></font></a>', link_style))
+    story.append(Paragraph('GitHub Source Code: <a href="https://github.com/yash28062007-max/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://github.com/yash28062007-max/yashwanth-micro-os-scheduler</u></font></a>', body_style))
+    story.append(Paragraph('GitHub Reports Folder: <a href="https://github.com/yash28062007-max/yashwanth-micro-os-scheduler/tree/main/reports"><font color="#2B6CB0"><u>https://github.com/yash28062007-max/yashwanth-micro-os-scheduler/tree/main/reports</u></font></a>', body_style))
+    story.append(Paragraph('Hugging Face Published ISO: <a href="https://huggingface.co/Yashbot07/yashwanth-microos-iso/tree/main"><font color="#2B6CB0"><u>https://huggingface.co/Yashbot07/yashwanth-microos-iso/tree/main</u></font></a>', body_style))
+    story.append(Paragraph('Hugging Face Simulator Space: <a href="https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler"><font color="#2B6CB0"><u>https://huggingface.co/spaces/Yashbot07/yashwanth-micro-os-scheduler</u></font></a>', body_style))
 
     story.append(Spacer(1, 10))
     story.append(Paragraph("<i>Note: This guide is generated based on verified laboratory benchmarks, compiled ISO builds, and Git commits as of November 2026.</i>", ParagraphStyle('Note', parent=body_style, textColor=colors.HexColor("#718096"), fontSize=7.5)))
