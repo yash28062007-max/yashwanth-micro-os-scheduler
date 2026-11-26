@@ -715,7 +715,7 @@
     </div>
     <div class="desktop-shortcut" onclick="openWindow('winWifi')">
       <div class="shortcut-icon">📶</div>
-      <div class="shortcut-label" id="desktopWifiLabel">Wi-Fi (MOJO-JAN-B-F5)</div>
+      <div class="shortcut-label" id="desktopWifiLabel">Wi-Fi (Jain_Student)</div>
     </div>
     <div class="desktop-shortcut" onclick="openWindow('winSnake')">
       <div class="shortcut-icon">🐍</div>
@@ -1127,9 +1127,9 @@
 
     <!-- System Tray Inset -->
     <div class="system-tray">
-      <div class="tray-wifi-pill" onclick="openWindow('winWifi')" id="trayWifiPill" title="Wi-Fi: MOJO-JAN-B-F5 (Connected, 100%)">
+      <div class="tray-wifi-pill" onclick="openWindow('winWifi')" id="trayWifiPill" title="Wi-Fi: Jain_Student (Connected, 100%)">
         <span>📶</span>
-        <span style="color: #008000;" id="trayWifiSsid">MOJO-JAN-B-F5</span>
+        <span style="color: #008000;" id="trayWifiSsid">Jain_Student</span>
       </div>
       <div title="Volume: 100%">🔊</div>
       <div id="trayClock">19:02</div>
@@ -1315,15 +1315,15 @@
     // Wi-Fi Connection Manager (Real Device Network)
     // -------------------------------------------------------------------------
     const wifiNetworks = [
-      { ssid: 'MOJO-JAN-B-F5', bssid: '3C:52:A1:05:AE:DA', signal: '100%', dbm: '-61 dBm', chan: 'Channel 1 (2.4 GHz)', rate: '270 Mbps', sec: 'WPA2' },
-      { ssid: 'MOJO-JAN-B-F6', bssid: '50:91:E3:75:7C:02', signal: '100%', dbm: '-37 dBm', chan: 'Channel 1 (2.4 GHz)', rate: '300 Mbps', sec: 'WPA2' },
-      { ssid: 'MOJO-JAN-B-F7', bssid: '3C:52:A1:05:B2:7A', signal: '100%', dbm: '-54 dBm', chan: 'Channel 9 (2.4 GHz)', rate: '270 Mbps', sec: 'WPA2' },
-      { ssid: 'A703-Mojo',    bssid: '3C:52:A1:05:B5:5A', signal: '100%', dbm: '-52 dBm', chan: 'Channel 1 (2.4 GHz)', rate: '300 Mbps', sec: 'WPA2' },
-      { ssid: 'Airtel_rjam_8146', bssid: '40:48:6E:70:3B:0A', signal: '80%', dbm: '-58 dBm', chan: 'Channel 11 (2.4 GHz)', rate: '144 Mbps', sec: 'WPA2' },
-      { ssid: 'A-303',        bssid: '50:91:E3:75:86:5A', signal: '55%', dbm: '-75 dBm', chan: 'Channel 2 (2.4 GHz)', rate: '54 Mbps', sec: 'WPA2' }
+      { ssid: 'Jain_Student',   bssid: '80:BC:37:8D:63:E8', signal: '100%', dbm: '-35 dBm', chan: 'Channel 3 (2.4 GHz)', rate: '144.4 Mbps', sec: 'Open (Campus)' },
+      { ssid: 'Jain_Guest',     bssid: '34:15:93:49:D8:18', signal: '95%',  dbm: '-42 dBm', chan: 'Channel 3 (2.4 GHz)', rate: '144 Mbps',   sec: 'WPA2' },
+      { ssid: 'Jain_Staff',     bssid: '80:BC:37:0D:63:E8', signal: '100%', dbm: '-36 dBm', chan: 'Channel 3 (2.4 GHz)', rate: '144 Mbps',   sec: 'WPA2-Enterprise' },
+      { ssid: 'Jain_Hackathon', bssid: 'C8:A6:08:78:09:E0', signal: '100%', dbm: '-38 dBm', chan: 'Channel 1 (802.11ax)', rate: '300 Mbps', sec: 'WPA3' },
+      { ssid: 'MOJO-JAN-B-F5',  bssid: '3C:52:A1:05:AE:DA', signal: '80%',  dbm: '-61 dBm', chan: 'Channel 1 (2.4 GHz)', rate: '270 Mbps',   sec: 'WPA2' },
+      { ssid: 'Airtel_rjam_8146', bssid: '40:48:6E:70:3B:0A', signal: '75%', dbm: '-65 dBm', chan: 'Channel 11 (2.4 GHz)', rate: '144 Mbps', sec: 'WPA2' }
     ];
 
-    let activeWifiSSID = 'MOJO-JAN-B-F5';
+    let activeWifiSSID = 'Jain_Student';
     let isWifiOnline = true;
 
     function renderWifiUI() {
